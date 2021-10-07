@@ -222,7 +222,7 @@ module.exports = function () {
 
             warnings.forEach(msg => {
                 this.setIndent(1)
-                    .write(this.chalk.bold.yellow(`--`))
+                    .write(this.chalk.bold.yellow('--'))
                     .newline()
                     .setIndent(2)
                     .write(msg)

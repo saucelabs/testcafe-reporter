@@ -4,17 +4,15 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 class Session {
-    browser;
-    specPath;
-    tests;
-    startTime;
-    endTime;
-    passed = true;
 
     constructor (browser, specPath, tests = []) {
         this.browser = browser;
         this.specPath = specPath;
         this.tests = tests;
+
+        this.passed = true;
+        this.startTime = null;
+        this.endTime = null;
     }
 
     addTest (test) {
@@ -49,8 +47,6 @@ class Test {
 }
 
 class Reporter {
-    session;
-
     constructor (logger = console, opts = {}) {
         this.log = logger;
 
@@ -73,6 +69,8 @@ class Reporter {
             tld:     tld,
             headers: { 'User-Agent': `testcafe-reporter/${reporterVersion}` }
         });
+
+        this.session = null;
     }
 
     addTest (test) {
@@ -190,7 +188,7 @@ class Reporter {
             }
 
             if (hasErrors || hasWarnings) {
-                log += `\n`;
+                log += '\n';
             }
         }
 
