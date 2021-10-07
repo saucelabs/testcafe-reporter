@@ -171,9 +171,9 @@ module.exports = function () {
         },
 
         taskDoneConsole (endTime, passed, warnings) {
-            var durationMs = endTime - this.startTime;
-            var durationStr = this.moment.duration(durationMs).format('h[h] mm[m] ss[s]');
-            var footer = passed === this.testCount ?
+            const durationMs = endTime - this.startTime;
+            const durationStr = this.moment.duration(durationMs).format('h[h] mm[m] ss[s]');
+            let footer = passed === this.testCount ?
                 this.chalk.bold.green(`${this.testCount} passed`) :
                 this.chalk.bold.red(`${this.testCount - passed}/${this.testCount} failed`);
 
@@ -205,7 +205,7 @@ module.exports = function () {
                 .newline();
 
             errs.forEach((err, idx) => {
-                var prefix = this.chalk.red(`${idx + 1}) `);
+                const prefix = this.chalk.red(`${idx + 1}) `);
 
                 this.newline()
                     .write(this.formatError(err, prefix))
