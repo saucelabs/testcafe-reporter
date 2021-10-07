@@ -12,6 +12,30 @@ against Sauce Labs, then refrain from installing this reporter, as you will be c
 npm install testcafe-reporter-saucelabs
 ```
 
+## Configuration
+
+### Sauce Labs credentials
+
+`SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` environment variables needs to be set to allow the plugin to report your results
+to Sauce Labs. Your Sauce Labs Username and Access Key are available from your
+[dashboard](https://app.saucelabs.com/user-settings).
+
+### TestCafe Configuration
+
+To configure the reporter, simply extend your TestCafe configuration file (e.g. `.testcaferc.js`):
+
+```js
+module.exports = {
+    "sauce": {
+        "build":  "build123",
+        "tags":   [
+            "app101",
+        ],
+        "region": "us-west-1",
+    }
+}
+```
+
 ## Usage
 
 When you run tests from the command line, specify the reporter name by using the `--reporter` option:
@@ -30,7 +54,3 @@ testCafe
     .reporter('saucelabs') // <-
     .run();
 ```
-
-## Author
-
-Sauce Labs Inc. (https://saucelabs.com)
