@@ -5,8 +5,7 @@
   },
   "extends": "eslint:recommended",
   "rules": {
-    "no-empty": "off",
-    "no-console": "off"
+    "no-empty": "off"
   },
   "env": {
     "es6": true,

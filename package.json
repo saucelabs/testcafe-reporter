@@ -8,14 +8,12 @@
     "email": "devx@saucelabs.com",
     "url": "https://www.saucelabs.com"
   },
-  "main": "lib/index",
+  "main": "src/index.js",
   "files": [
-    "lib"
+    "src"
   ],
   "scripts": {
-    "test": "gulp test",
-    "publish-please": "publish-please",
-    "prepublish": "publish-please guard"
+    "lint": "eslint src/"
   },
   "keywords": [
     "saucelabs",
