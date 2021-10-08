@@ -16,7 +16,7 @@ class Session {
     }
 
     addTest (test) {
-        this.passed &&= !test.errs.length;
+        this.passed = this.passed && !test.errs.length;
 
         if (!this.startTime || test.startTime < this.startTime) {
             this.startTime = test.startTime;
