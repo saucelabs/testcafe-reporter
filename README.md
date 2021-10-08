@@ -12,6 +12,8 @@ against Sauce Labs, then refrain from installing this reporter, as you will be c
 npm install testcafe-reporter-saucelabs
 ```
 
+**Requirement**: Node.js 14 or higher.
+
 ## Configuration
 
 ### Sauce Labs credentials
