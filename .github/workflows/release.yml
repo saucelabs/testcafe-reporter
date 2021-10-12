@@ -1,0 +1,40 @@
+name: Release New Version
+
+on:
+    workflow_dispatch:
+        inputs:
+            releaseType:
+                description: 'Release type - major, minor or patch'
+                required: false
+                default: 'patch'
+
+jobs:
+    publish-release:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  ref: ${{ github.ref }}
+                  fetch-depth: 0
+
+            - name: Setup Node version
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.x
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Setup Git
+              run: |
+                  git config --global user.name "devx-sauce-bot"
+                  git config --global user.email "devx.bot@saucelabs.com"
+
+            - name: Login to NPM
+              run: npm set "//registry.npmjs.org/:_authToken" ${{ secrets.NPM_TOKEN }}
+
+            - name: Release
+              run: npm run release:ci -- ${{ github.event.inputs.releaseType }}
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+                  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
