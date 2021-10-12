@@ -2,7 +2,7 @@
   "name": "testcafe-reporter-saucelabs",
   "version": "0.0.0",
   "description": "Sauce Labs TestCafe reporter plugin.",
-  "repository": "https://github.com/alexplischke/testcafe-reporter-saucelabs",
+  "repository": "https://github.com/saucelabs/testcafe-reporter",
   "author": {
     "name": "devx",
     "email": "devx@saucelabs.com",
