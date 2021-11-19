@@ -1,4 +1,5 @@
 const SauceLabs = require('saucelabs').default;
+const {Status, TestRun, Suite, Attachment} = require('@saucelabs/sauce-json-reporter');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -125,12 +126,64 @@ class Reporter {
 
         let assets = [
             this.createConsoleLog(session),
+            this.createSauceTestReport(session),
             ...this.getVideos(session.tests),
             ...this.getScreenshots(session.tests)];
 
         await this.uploadAssets(sessionId, assets);
 
         return this.getJobURL(sessionId);
+    }
+
+    createSauceTestReport(session) {
+        const testRun = new TestRun();
+        testRun.status = session.passed ? Status.Passed : Status.Failed;
+
+        let suite, fixture;
+
+        for (const test of session.tests) {
+            suite = testRun.withSuite(test.specPath);
+            fixture = suite.withSuite(test.fixtureName);
+
+            let duration;
+            if (test.startTime && test.endTime) {
+                duration = test.endTime - test.startTime;
+            }
+
+            const testStatus = (test.errs && test.errs.length) ? Status.Failed : Status.Passed;
+            suite.status = suite.status === Status.Passed ? testStatus : suite.status;
+            fixture.status = fixture.status === Status.Passed ? testStatus : fixture.status;
+
+            const addedTest = fixture.withTest(
+                test.name,
+                testStatus,
+                duration,
+                '',
+                test.startTime,
+                { browser: test.browser.name },
+            );
+
+            if (test.video) {
+                addedTest.attach({
+                    name: `${test.name}`,
+                    contentType: 'video/mp4',
+                    path: `${test.name}.mp4`,
+                });
+            }
+            for (const screenshot of test.screenshots) {
+                const suffix = path.basename(screenshot.screenshotPath);
+                const filename = `${test.name} - ${suffix}`;
+                addedTest.attach({
+                    name: filename,
+                    contentType: 'image/png',
+                    path: filename,
+                });
+            }
+        }
+        return {
+            filename: 'sauce-test-report.json',
+            data: testRun,
+        };
     }
 
     async createJob (body) {

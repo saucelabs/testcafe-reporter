@@ -32,10 +32,11 @@
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
-    "testcafe": "^1.0.1",
-    "release-it": "^14.11.6"
+    "release-it": "^14.11.6",
+    "testcafe": "^1.0.1"
   },
   "dependencies": {
+    "@saucelabs/sauce-json-reporter": "^0.0.2",
     "saucelabs": "^6.1.0"
   }
 }
