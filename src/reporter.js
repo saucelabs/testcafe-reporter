@@ -171,8 +171,7 @@ class Reporter {
                 });
             }
             for (const screenshot of test.screenshots) {
-                const suffix = path.basename(screenshot.screenshotPath);
-                const filename = `${test.name} - ${suffix}`;
+                const filename = this.getScreenshotName(test.name, screenshot.screenshotPath);
                 addedTest.attach({
                     name: filename,
                     contentType: 'image/png',
@@ -276,15 +275,19 @@ class Reporter {
     getScreenshots (tests) {
         return tests.flatMap(test => {
             return test.screenshots.map(screenshot => {
-                // There can be multiple screenshots per test. Using a suffix to avoid collisions.
-                const suffix = path.basename(screenshot.screenshotPath);
                 return {
-                    filename: `${test.name} - ${suffix}`,
+                    filename: this.getScreenshotName(test.name, screenshot.screenshotPath),
                     data:     this.maybeReadFile(screenshot.screenshotPath)
                 };
             })
                 .filter(artifact => artifact.data);
         });
+    }
+
+    getScreenshotName (testName, filePath) {
+        // There can be multiple screenshots per test. Using a suffix to avoid collisions.
+        const suffix = path.basename(filePath);
+        return `${testName} - ${suffix}`;
     }
 
     maybeReadFile (filepath) {
