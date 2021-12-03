@@ -1,3 +1,4 @@
+const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
 const { Reporter, Test } = require('./reporter');
 const path = require('path');
 
@@ -11,12 +12,16 @@ module.exports = function () {
         startTime:      null,
         startTimes:     new Map(),
 
+        sauceTestReport: SauceJsonReporter.newReporter(),
+
         reportTaskStart (startTime, userAgents, testCount, testStructure, properties) {
             this.reporter = new Reporter(this, properties.configuration.sauce);
             this.startTime = startTime;
             this.testCount = testCount;
 
             this.taskStartConsole(userAgents);
+
+            this.sauceTestReport.reportTaskStart(startTime, userAgents, testCount);
         },
 
         taskStartConsole (userAgents) {
@@ -35,6 +40,7 @@ module.exports = function () {
         },
 
         async reportFixtureStart (name, specPath) {
+            this.sauceTestReport.reportFixtureStart(name, specPath);
             // Flush pending reports when we encounter a new spec.
             if (this.specPath !== specPath) {
                 this.specEndConsole(await this.reporter.flush());
@@ -84,10 +90,13 @@ module.exports = function () {
         },
 
         reportTestStart (name, meta, testStartInfo) {
+            this.sauceTestReport.reportTestStart(name, meta, testStartInfo);
             this.startTimes.set(testStartInfo.testId, new Date());
         },
 
         async reportTestDone (name, testRunInfo) {
+            this.sauceTestReport.reportTestDone(name, testRunInfo);
+
             const startTime = this.startTimes.get(testRunInfo.testId);
             this.startTimes.delete(testRunInfo.testId);
 
@@ -166,6 +175,9 @@ module.exports = function () {
         },
 
         async reportTaskDone (endTime, passed, warnings) {
+            this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
+
+            console.log(this.sauceTestReport.assets);
             this.specEndConsole(await this.reporter.flush());
             this.taskDoneConsole(endTime, passed, warnings);
         },
