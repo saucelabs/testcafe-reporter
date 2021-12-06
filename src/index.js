@@ -151,20 +151,13 @@ module.exports = function () {
             for (const s of [...sessions.values()]) {
                 try {
                     const url = await this.reporter.reportSession({
-                        // TODO Need a reasonable name for the sauce job
-                        specPath: s.userAgent,
+                        name: s.userAgent,
                         startTime: s.startTime,
                         endTime: s.endTime,
-                        status: s.testRun.computeStatus(),
-                        browser: {
-                            prettyUserAgent: s.userAgent,
-                            name: s._browser.name,
-                            version: s._browser.version,
-                            os: {
-                                name: s._platform.name,
-                                version: s._platform.version,
-                            },
-                        },
+                        userAgent: s.userAgent,
+                        browserName: s.browserName,
+                        browserVersion: s.browserVersion,
+                        platformName: s.platform,
                         assets: s.assets,
                         testRun: s.testRun,
                     });

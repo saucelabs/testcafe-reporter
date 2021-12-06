@@ -43,32 +43,34 @@ class Reporter {
         }
 
         const body = {
-            name:             session.specPath,
+            name:             session.name,
             user:             process.env.SAUCE_USERNAME,
             startTime:        session.startTime.toISOString(),
             endTime:          session.endTime.toISOString(),
             framework:        'testcafe',
             frameworkVersion: '0.0.0', // TODO https://github.com/DevExpress/testcafe/issues/6591
             status:           'complete',
-            suite:            session.specPath,
-            passed:           session.status === Status.Passed,
+            passed:           session.testRun.computeStatus() === Status.Passed,
             build:            this.build,
             tags:             this.tags,
-            browserName:      session.browser.name,
-            browserVersion:   session.browser.version,
-            platformName:     `${session.browser.os.name} ${session.browser.os.version}`,
+            browserName:      session.browserName,
+            browserVersion:   session.browserVersion,
+            platformName:     session.platformName,
         };
 
         const sessionId = await this.createJob(body);
 
         const assets = session.assets.map((a) => {
-            return {filename: a.name, data: a.localPath };
+            return {
+                filename: a.name,
+                data: a.localPath
+            };
         });
         assets.push({
             filename: 'sauce-test-report.json',
             data: session.testRun,
         });
-        assets.push(this.createConsoleLog(session));
+        assets.push(this.createConsoleLog(session.testRun, session.userAgent));
 
         await this.uploadAssets(sessionId, assets);
 
@@ -123,9 +125,8 @@ class Reporter {
         return `${indent}${result} ${name} (${duration}ms)${error}\n`;
     }
 
-    createConsoleLog (session) {
-        const testRun = session.testRun;
-        let log = `Running tests in: ${session.browser.prettyUserAgent}\n\n\n`;
+    createConsoleLog (testRun, userAgent) {
+        let log = `Running tests in: ${userAgent}\n\n\n`;
 
         log += 'Results:\n\n';
         for (const s of testRun.suites) {
