@@ -145,12 +145,10 @@ module.exports = function () {
         async reportTaskDone (endTime, passed, warnings) {
             this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
 
-            this.taskDoneConsole(endTime, passed, warnings);
-
             const sessions = this.sauceTestReport.sessions;
             for (const s of [...sessions.values()]) {
                 try {
-                    const url = await this.reporter.reportSession({
+                    const jobUrl = await this.reporter.reportSession({
                         name: s.userAgent,
                         startTime: s.startTime,
                         endTime: s.endTime,
@@ -162,11 +160,12 @@ module.exports = function () {
                         testRun: s.testRun,
                     });
 
-                    this.specEndConsole(url);
+                    this.specEndConsole(jobUrl);
                 } catch (e) {
                     this.error(`Sauce Labs Report Failed: ${e.message}`);
                 }
             }
+            this.taskDoneConsole(endTime, passed, warnings);
         },
 
         taskDoneConsole (endTime, passed, warnings) {

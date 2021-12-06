@@ -97,9 +97,9 @@ class Reporter {
     }
 
     logSuite (suite, depth = 0) {
-        const indent = ' '.repeat(depth * 4);
-        const result = suite.status === Status.Passed ? '✓' : '✖';
-        let log = `${indent}${result} ${suite.name}\n`;
+        const indent = '    '.repeat(depth);
+        const resultIcon = suite.status === Status.Passed ? '✓' : '✖';
+        let log = `${indent}${resultIcon} ${suite.name}\n`;
         for (const t of suite.tests) {
             log += this.logTest(t, depth + 1);
         }
@@ -111,9 +111,9 @@ class Reporter {
         return log;
     }
 
-    logTest(test, depth = 0) {
-        const indent = ' '.repeat(depth * 4);
-        const result = test.status === Status.Passed ? '✓' : '✖';
+    logTest (test, depth = 0) {
+        const indent = '    '.repeat(depth);
+        const resultIcon = test.status === Status.Passed ? '✓' : '✖';
         const name = test.name;
         const duration = test.duration;
 
@@ -122,7 +122,7 @@ class Reporter {
             error = `\n\n${indent}\n${test.output}\n\n`;
         }
 
-        return `${indent}${result} ${name} (${duration}ms)${error}\n`;
+        return `${indent}${resultIcon} ${name} (${duration}ms)${error}\n`;
     }
 
     createConsoleLog (testRun, userAgent) {
