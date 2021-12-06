@@ -1,5 +1,5 @@
 const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
-const { Reporter, Test } = require('./reporter');
+const { Reporter } = require('./reporter');
 const path = require('path');
 
 module.exports = function () {
@@ -41,10 +41,7 @@ module.exports = function () {
 
         async reportFixtureStart (name, specPath) {
             this.sauceTestReport.reportFixtureStart(name, specPath);
-            // Flush pending reports when we encounter a new spec.
             if (this.specPath !== specPath) {
-                this.specEndConsole(await this.reporter.flush());
-
                 this.specPath = specPath;
                 this.relSpecPath = path.relative(process.cwd(), this.specPath);
                 this.specStartConsole(this.relSpecPath);
@@ -71,7 +68,7 @@ module.exports = function () {
                 .useWordWrap(true)
                 .newline()
                 .write(`Sauce Labs Report: ${jobURL}`)
-                .newline().newline();
+                .newline();
         },
 
         fixtureStartConsole (name) {
@@ -96,35 +93,6 @@ module.exports = function () {
 
         async reportTestDone (name, testRunInfo) {
             this.sauceTestReport.reportTestDone(name, testRunInfo);
-
-            const startTime = this.startTimes.get(testRunInfo.testId);
-            this.startTimes.delete(testRunInfo.testId);
-
-            testRunInfo.browsers.forEach(browser => {
-                function idMapper (val) {
-                    if (val.testRunId === browser.testRunId) {
-                        return val;
-                    }
-                }
-
-                let errs = testRunInfo.errs.map(idMapper).map(err => this.formatError(err));
-                let warnings = testRunInfo.warnings.map(idMapper);
-                let screenshots = testRunInfo.screenshots.map(idMapper);
-                let video = testRunInfo.videos.map(idMapper)[0]; // There's only one video per test. So pick the first.
-
-                this.reporter.addTest(new Test(
-                    name,
-                    this.fixtureName,
-                    browser,
-                    this.relSpecPath,
-                    startTime,
-                    new Date(),
-                    errs,
-                    warnings,
-                    screenshots,
-                    video));
-            });
-
             this.testDoneConsole(name, testRunInfo);
         },
 
@@ -177,9 +145,35 @@ module.exports = function () {
         async reportTaskDone (endTime, passed, warnings) {
             this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
 
-            console.log(this.sauceTestReport.assets);
-            this.specEndConsole(await this.reporter.flush());
             this.taskDoneConsole(endTime, passed, warnings);
+
+            const sessions = this.sauceTestReport.sessions;
+            for (const s of [...sessions.values()]) {
+                try {
+                    const url = await this.reporter.reportSession({
+                        // TODO Need a reasonable name for the sauce job
+                        specPath: s.userAgent,
+                        startTime: s.startTime,
+                        endTime: s.endTime,
+                        status: s.testRun.computeStatus(),
+                        browser: {
+                            prettyUserAgent: s.userAgent,
+                            name: s._browser.name,
+                            version: s._browser.version,
+                            os: {
+                                name: s._platform.name,
+                                version: s._platform.version,
+                            },
+                        },
+                        assets: s.assets,
+                        testRun: s.testRun,
+                    });
+
+                    this.specEndConsole(url);
+                } catch (e) {
+                    this.error(`Sauce Labs Report Failed: ${e.message}`);
+                }
+            }
         },
 
         taskDoneConsole (endTime, passed, warnings) {
