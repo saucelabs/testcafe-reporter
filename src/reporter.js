@@ -58,14 +58,16 @@ class Reporter {
         } catch (e) {
         }
 
+        this.username = opts.username || process.env.SAUCE_USERNAME;
+        this.accessKey = opts.accessKey || process.env.SAUCE_ACCESS_KEY;
         this.build = opts.build || randomBuildID();
         this.tags = opts.tags;
         this.region = opts.region || 'us-west-1';
         const tld = this.region === 'staging' ? 'net' : 'com';
 
         this.api = new SauceLabs({
-            user:    process.env.SAUCE_USERNAME,
-            key:     process.env.SAUCE_ACCESS_KEY,
+            user:    this.username,
+            key:     this.accessKey,
             region:  this.region,
             tld:     tld,
             headers: { 'User-Agent': `testcafe-reporter/${reporterVersion}` }
@@ -97,7 +99,7 @@ class Reporter {
     }
 
     isAccountSet () {
-        return process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY;
+        return this.username && this.accessKey;
     }
 
     async reportSession (session) {

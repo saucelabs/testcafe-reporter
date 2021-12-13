@@ -22,18 +22,20 @@ npm install testcafe-reporter-saucelabs
 to Sauce Labs. Your Sauce Labs Username and Access Key are available from your
 [dashboard](https://app.saucelabs.com/user-settings).
 
+Alternatively, you can use `username` and `accessKey` fields in the reporter configuration.
+
 ### TestCafe Configuration
 
 To configure the reporter, simply extend your TestCafe configuration file (e.g. `.testcaferc.js`):
 
 ```js
 module.exports = {
-    "sauce": {
-        "build":  "build123",
-        "tags":   [
+    sauce: {
+        build:  "build123",
+        tags:   [
             "app101",
         ],
-        "region": "us-west-1",
+        region: "us-west-1",
     }
 }
 ```
