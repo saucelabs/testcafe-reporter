@@ -223,9 +223,11 @@ class Reporter {
                 log += '\n    Errors:\n';
 
                 errors.forEach(error => {
-                    const errLines = error.split('\n');
-                    for (let err of errLines) {
-                        log += `        ${err}\n`;
+                    if (error) {
+                        const errLines = error.split('\n');
+                        for (let err of errLines) {
+                            log += `        ${err}\n`;
+                        }
                     }
                 });
             }
@@ -234,9 +236,11 @@ class Reporter {
                 log += '\n    Warnings:\n';
 
                 warnings.forEach(warning => {
-                    const warLines = warning.split('\n');
-                    for (let war of warLines) {
-                        log += `        ${war}\n`;
+                    if (warning) {
+                        const warLines = warning.split('\n');
+                        for (let war of warLines) {
+                            log += `        ${war}\n`;
+                        }
                     }
                 });
             }
