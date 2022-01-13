@@ -59,7 +59,7 @@ module.exports = function () {
                 .newline();
         },
 
-        specEndConsole (jobURL) {
+        specEndConsole (jobURL, userAgent) {
             if (!jobURL) {
                 return;
             }
@@ -67,7 +67,7 @@ module.exports = function () {
             this.setIndent(2)
                 .useWordWrap(true)
                 .newline()
-                .write(`Sauce Labs Report: ${jobURL}`)
+                .write(`Sauce Labs Report (${userAgent}): ${jobURL}`)
                 .newline();
         },
 
@@ -160,7 +160,7 @@ module.exports = function () {
                         testRun: s.testRun,
                     });
 
-                    this.specEndConsole(jobUrl);
+                    this.specEndConsole(jobUrl, s.userAgent);
                 } catch (e) {
                     this.error(`Sauce Labs Report Failed: ${e.message}`);
                 }
