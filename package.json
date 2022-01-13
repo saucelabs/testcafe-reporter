@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@saucelabs/sauce-json-reporter": "^0.0.2",
-    "saucelabs": "^6.1.0"
+    "saucelabs": "^6.1.0",
+    "testcafe-reporter-sauce-json": "^0.0.2"
   }
 }

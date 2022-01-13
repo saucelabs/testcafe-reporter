@@ -1,4 +1,5 @@
-const { Reporter, Test } = require('./reporter');
+const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
+const { Reporter } = require('./reporter');
 const path = require('path');
 
 module.exports = function () {
@@ -11,12 +12,16 @@ module.exports = function () {
         startTime:      null,
         startTimes:     new Map(),
 
+        sauceTestReport: SauceJsonReporter.newReporter(),
+
         reportTaskStart (startTime, userAgents, testCount, testStructure, properties) {
             this.reporter = new Reporter(this, properties.configuration.sauce);
             this.startTime = startTime;
             this.testCount = testCount;
 
             this.taskStartConsole(userAgents);
+
+            this.sauceTestReport.reportTaskStart(startTime, userAgents, testCount);
         },
 
         taskStartConsole (userAgents) {
@@ -35,10 +40,8 @@ module.exports = function () {
         },
 
         async reportFixtureStart (name, specPath) {
-            // Flush pending reports when we encounter a new spec.
+            this.sauceTestReport.reportFixtureStart(name, specPath);
             if (this.specPath !== specPath) {
-                this.specEndConsole(await this.reporter.flush());
-
                 this.specPath = specPath;
                 this.relSpecPath = path.relative(process.cwd(), this.specPath);
                 this.specStartConsole(this.relSpecPath);
@@ -56,7 +59,7 @@ module.exports = function () {
                 .newline();
         },
 
-        specEndConsole (jobURL) {
+        specEndConsole (jobURL, userAgent) {
             if (!jobURL) {
                 return;
             }
@@ -64,8 +67,8 @@ module.exports = function () {
             this.setIndent(2)
                 .useWordWrap(true)
                 .newline()
-                .write(`Sauce Labs Report: ${jobURL}`)
-                .newline().newline();
+                .write(`Sauce Labs Report (${userAgent}): ${jobURL}`)
+                .newline();
         },
 
         fixtureStartConsole (name) {
@@ -84,38 +87,12 @@ module.exports = function () {
         },
 
         reportTestStart (name, meta, testStartInfo) {
+            this.sauceTestReport.reportTestStart(name, meta, testStartInfo);
             this.startTimes.set(testStartInfo.testId, new Date());
         },
 
         async reportTestDone (name, testRunInfo) {
-            const startTime = this.startTimes.get(testRunInfo.testId);
-            this.startTimes.delete(testRunInfo.testId);
-
-            testRunInfo.browsers.forEach(browser => {
-                function idMapper (val) {
-                    if (val.testRunId === browser.testRunId) {
-                        return val;
-                    }
-                }
-
-                let errs = testRunInfo.errs.map(idMapper).map(err => this.formatError(err));
-                let warnings = testRunInfo.warnings.map(idMapper);
-                let screenshots = testRunInfo.screenshots.map(idMapper);
-                let video = testRunInfo.videos.map(idMapper)[0]; // There's only one video per test. So pick the first.
-
-                this.reporter.addTest(new Test(
-                    name,
-                    this.fixtureName,
-                    browser,
-                    this.relSpecPath,
-                    startTime,
-                    new Date(),
-                    errs,
-                    warnings,
-                    screenshots,
-                    video));
-            });
-
+            this.sauceTestReport.reportTestDone(name, testRunInfo);
             this.testDoneConsole(name, testRunInfo);
         },
 
@@ -166,7 +143,28 @@ module.exports = function () {
         },
 
         async reportTaskDone (endTime, passed, warnings) {
-            this.specEndConsole(await this.reporter.flush());
+            this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
+
+            const sessions = this.sauceTestReport.sessions;
+            for (const s of [...sessions.values()]) {
+                try {
+                    const jobUrl = await this.reporter.reportSession({
+                        name: s.userAgent,
+                        startTime: s.startTime,
+                        endTime: s.endTime,
+                        userAgent: s.userAgent,
+                        browserName: s.browserName,
+                        browserVersion: s.browserVersion,
+                        platformName: s.platform,
+                        assets: s.assets,
+                        testRun: s.testRun,
+                    });
+
+                    this.specEndConsole(jobUrl, s.userAgent);
+                } catch (e) {
+                    this.error(`Sauce Labs Report Failed: ${e.message}`);
+                }
+            }
             this.taskDoneConsole(endTime, passed, warnings);
         },
 
