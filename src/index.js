@@ -149,7 +149,7 @@ module.exports = function () {
             const sessions = this.sauceTestReport.sessions;
             for (const s of [...sessions.values()]) {
                 let jobName = s.userAgent;
-                if (this.config.name !== '') {
+                if (this.config && this.config.name !== '') {
                     jobName = `${this.config.name} - ${s.userAgent}`;
                 }
                 try {
