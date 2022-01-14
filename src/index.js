@@ -15,6 +15,7 @@ module.exports = function () {
         sauceTestReport: SauceJsonReporter.newReporter(),
 
         reportTaskStart (startTime, userAgents, testCount, testStructure, properties) {
+            this.config = properties.configuration.sauce;
             this.reporter = new Reporter(this, properties.configuration.sauce);
             this.startTime = startTime;
             this.testCount = testCount;
@@ -59,7 +60,7 @@ module.exports = function () {
                 .newline();
         },
 
-        specEndConsole (jobURL, userAgent) {
+        specEndConsole (jobURL, jobName) {
             if (!jobURL) {
                 return;
             }
@@ -67,7 +68,7 @@ module.exports = function () {
             this.setIndent(2)
                 .useWordWrap(true)
                 .newline()
-                .write(`Sauce Labs Report (${userAgent}): ${jobURL}`)
+                .write(`Sauce Labs Report (${jobName}): ${jobURL}`)
                 .newline();
         },
 
@@ -147,9 +148,13 @@ module.exports = function () {
 
             const sessions = this.sauceTestReport.sessions;
             for (const s of [...sessions.values()]) {
+                let jobName = s.userAgent;
+                if (this.config.name !== '') {
+                    jobName = `${this.config.name} - ${s.userAgent}`;
+                }
                 try {
                     const jobUrl = await this.reporter.reportSession({
-                        name: s.userAgent,
+                        name: jobName,
                         startTime: s.startTime,
                         endTime: s.endTime,
                         userAgent: s.userAgent,
@@ -160,7 +165,7 @@ module.exports = function () {
                         testRun: s.testRun,
                     });
 
-                    this.specEndConsole(jobUrl, s.userAgent);
+                    this.specEndConsole(jobUrl, jobName);
                 } catch (e) {
                     this.error(`Sauce Labs Report Failed: ${e.message}`);
                 }

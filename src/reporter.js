@@ -20,6 +20,7 @@ class Reporter {
         this.build = opts.build || randomBuildID();
         this.tags = opts.tags;
         this.region = opts.region || 'us-west-1';
+        this.jobName = opts.name || '';
         const tld = this.region === 'staging' ? 'net' : 'com';
 
         this.api = new SauceLabs({
