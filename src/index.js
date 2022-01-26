@@ -4,7 +4,6 @@ const path = require('path');
 
 module.exports = function () {
     return {
-        noColors:       true,
         specPath:       '',
         relSpecPath:    '',
         fixtureName:    '',
