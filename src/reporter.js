@@ -74,7 +74,8 @@ class Reporter {
 
         await this.uploadAssets(sessionId, assets);
 
-        return this.getJobURL(sessionId);
+        // return this.getJobURL(sessionId);
+        return sessionId;
     }
 
     async createJob (body) {
