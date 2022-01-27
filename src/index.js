@@ -4,7 +4,7 @@ const path = require('path');
 
 module.exports = function () {
     return {
-        indentWidth: 2,
+        indentWidth:    2,
         specPath:       '',
         relSpecPath:    '',
         fixtureName:    '',
