@@ -38,9 +38,49 @@ module.exports = function () {
             this.newline();
         },
 
+        async reportCurrentFixture() {
+            this.setIndent(2)
+                .newline()
+                .write(this.chalk.bold.underline('Sauce Labs Test Report'))
+                .newline();
+
+            const reportTasks = [];
+            for (const [userAgent, browserTestRun] of this.sauceTestReport.currentFixture.browserTestRuns) {
+                const f = this.sauceTestReport.currentFixture;
+
+                return new Promise((resolve) => {
+                    (async () => {
+                        const session = {
+                            name: f.path,
+                            startTime: new Date(Date.now() - 5 * 1000),
+                            endTime: new Date(),
+                            testRun: browserTestRun.testRun,
+                            browserName: browserTestRun.browserName,
+                            browserVersion: browserTestRun.browserVersion,
+                            platformName: browserTestRun.platform,
+                            assets: browserTestRun.assets,
+                            userAgent: userAgent,
+                        };
+                        try {
+                            const sessionId = await this.reporter.reportSession(session);
+                            this.setIndent(4)
+                                .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(this.reporter.getJobURL(sessionId))}`)
+                                .newline()
+                                .newline();
+                            resolve(sessionId);
+                        } catch (e) {
+                            console.log(e);
+                        }
+                    })();
+                });
+            }
+            await Promise.all(reportTasks);
+        },
+
         async reportFixtureStart (name, specPath) {
             if (this.specPath && this.specPath !== specPath) {
                 // End of currently running spec
+                await this.reportCurrentFixture();
             }
 
             this.sauceTestReport.reportFixtureStart(name, specPath);
@@ -53,26 +93,14 @@ module.exports = function () {
         },
 
         specStartConsole (relSpecPath) {
-            this.setIndent(1)
+            this.setIndent(2)
                 .useWordWrap(true)
-                .write(relSpecPath)
+                .write(this.chalk.underline(relSpecPath))
                 .newline();
         },
 
-        // specEndConsole (jobURL) {
-        //     if (!jobURL) {
-        //         return;
-        //     }
-
-        //     this.setIndent(2)
-        //         .useWordWrap(true)
-        //         .newline()
-        //         .write(`Sauce Labs Report (${userAgent}): ${jobURL}`)
-        //         .newline();
-        // },
-
         fixtureStartConsole (name) {
-            this.setIndent(2)
+            this.setIndent(4)
                 .useWordWrap(true);
 
             if (this.afterErrorList) {
@@ -145,83 +173,9 @@ module.exports = function () {
         async reportTaskDone (endTime, passed, warnings) {
             this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
 
+            await this.reportCurrentFixture();
+
             this.taskDoneConsole(endTime, passed, warnings);
-
-            if (this.sauceTestReport.fixtures.length > 0) {
-                this.setIndent(2)
-                    .useWordWrap(true)
-                    .newline()
-                    .write(this.chalk.underline.bold('Sauce Labs Report'))
-                    .newline();
-            }
-
-            const reports = this.sauceTestReport.fixtures.flatMap((f) => {
-                const mappedRuns = [];
-                for (const [userAgent, browserTestRun] of f.browserTestRuns) {
-                    return new Promise((resolve) => {
-                        (async () => {
-                            const session = {
-                                name: f.path,
-                                startTime: f.startTime,
-                                endTime: f.endTime,
-                                testRun: browserTestRun.testRun,
-                                browserName: browserTestRun.browserName,
-                                browserVersion: browserTestRun.browserVersion,
-                                platformName: browserTestRun.platform,
-                                assets: browserTestRun.assets,
-                                userAgent: userAgent,
-                            };
-                            try {
-                                const sessionId = await this.reporter.reportSession(session);
-                                this.setIndent(4)
-                                    .write(`* ${f.name} (${f.path})`)
-                                    .newline()
-                                    .setIndent(6)
-                                    .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(this.reporter.getJobURL(sessionId))}`)
-                                    .newline()
-                                    .newline();
-                                resolve(sessionId);
-                            } catch (e) {
-                                // TODO: How to handle report failure?
-                            }
-                        })();
-                    });
-                }
-
-                return mappedRuns;
-            });
-
-            try {
-                await Promise.allSettled(reports);
-            } catch (e) {
-                // TODO: Handle failure?
-            }
-
-            // this.sauceTestReport.fixtures.forEach(async (fixture) => {
-            //     fixture.browserTestRuns.forEach(
-            //         async (browserTestRun, userAgent) => {
-            //             const jobUrl = await this.reporter.reportSession({
-            //                 name: fixture.path,
-            //                 startTime: fixture.startTime,
-            //                 endTime: fixture.endTime,
-            //                 testRun: browserTestRun.testRun,
-            //                 browserName: browserTestRun.browserName,
-            //                 browserVersion: browserTestRun.browserVersion,
-            //                 platformName: browserTestRun.platform,
-            //                 assets: browserTestRun.assets,
-            //                 userAgent: userAgent,
-            //             });
-
-            //             this.setIndent(4)
-            //                 .write(`* ${fixture.name} (${fixture.path})`)
-            //                 .newline()
-            //                 .setIndent(6)
-            //                 .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(jobUrl)}`)
-            //                 .newline()
-            //                 .newline();
-            //         });
-            // });
-
         },
 
         taskDoneConsole (endTime, passed, warnings) {
