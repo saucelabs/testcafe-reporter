@@ -52,8 +52,8 @@ module.exports = function () {
                     (async () => {
                         const session = {
                             name: f.path,
-                            startTime: new Date(Date.now() - 5 * 1000),
-                            endTime: new Date(),
+                            startTime: f.startTime,
+                            endTime: f.endTime,
                             testRun: browserTestRun.testRun,
                             browserName: browserTestRun.browserName,
                             browserVersion: browserTestRun.browserVersion,
