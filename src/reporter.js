@@ -74,7 +74,6 @@ class Reporter {
 
         await this.uploadAssets(sessionId, assets);
 
-        // return this.getJobURL(sessionId);
         return sessionId;
     }
 
