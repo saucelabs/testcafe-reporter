@@ -207,7 +207,7 @@ module.exports = function () {
         },
 
         _renderErrors (errs) {
-            this.setIndent(3)
+            this.setIndent(this.indentWidth * 4)
                 .newline();
 
             errs.forEach((err, idx) => {
@@ -222,15 +222,15 @@ module.exports = function () {
 
         _renderWarnings (warnings) {
             this.newline()
-                .setIndent(1)
+                .setIndent(this.indentWidth * 4)
                 .write(this.chalk.bold.yellow(`Warnings (${warnings.length}):`))
                 .newline();
 
             warnings.forEach(msg => {
-                this.setIndent(1)
+                this.setIndent(this.indentWidth * 4)
                     .write(this.chalk.bold.yellow('--'))
                     .newline()
-                    .setIndent(2)
+                    .setIndent(this.indentWidth * 5)
                     .write(msg)
                     .newline();
             });
