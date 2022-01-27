@@ -1,3 +1,4 @@
+/* eslint-env node */
 const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
 const { Reporter } = require('./reporter');
 const path = require('path');
@@ -73,7 +74,7 @@ module.exports = function () {
                 });
                 reportTasks.push(task);
             }
-            await Promise.all(reportTasks);
+            await Promise.allSettled(reportTasks);
             this.newline();
         },
 

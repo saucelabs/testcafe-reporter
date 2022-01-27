@@ -1,3 +1,4 @@
+/* eslint-env node */
 const SauceLabs = require('saucelabs').default;
 const { Status } = require('@saucelabs/sauce-json-reporter');
 const path = require('path');
