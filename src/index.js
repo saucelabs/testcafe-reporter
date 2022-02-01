@@ -1,10 +1,11 @@
+/* eslint-env node */
 const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
 const { Reporter } = require('./reporter');
 const path = require('path');
 
 module.exports = function () {
     return {
-        noColors:       true,
+        indentWidth:    2,
         specPath:       '',
         relSpecPath:    '',
         fixtureName:    '',
@@ -25,54 +26,82 @@ module.exports = function () {
         },
 
         taskStartConsole (userAgents) {
-            this.setIndent(1)
+            this.newline()
                 .useWordWrap(true)
                 .write(this.chalk.bold('Running tests in:'))
                 .newline();
 
             userAgents.forEach(ua => {
-                this
-                    .write(`- ${this.chalk.blue(ua)}`)
+                this.setIndent(this.indentWidth)
+                    .write(`- ${this.chalk.cyan(ua)}`)
                     .newline();
             });
 
             this.newline();
         },
 
-        async reportFixtureStart (name, specPath) {
-            this.sauceTestReport.reportFixtureStart(name, specPath);
-            if (this.specPath !== specPath) {
-                this.specPath = specPath;
-                this.relSpecPath = path.relative(process.cwd(), this.specPath);
-                this.specStartConsole(this.relSpecPath);
-            }
+        async reportFixture(fixture) {
+            this.setIndent(this.indentWidth * 3)
+                .newline()
+                .write(this.chalk.bold.underline('Sauce Labs Test Report'))
+                .newline();
 
-            this.fixtureName = name;
+            const reportTasks = [];
+            for (const [userAgent, browserTestRun] of fixture.browserTestRuns) {
+                const task = new Promise((resolve, reject) => {
+                    (async () => {
+                        const session = {
+                            name: fixture.path,
+                            startTime: fixture.startTime,
+                            endTime: new Date(),
+                            testRun: browserTestRun.testRun,
+                            browserName: browserTestRun.browserName,
+                            browserVersion: browserTestRun.browserVersion,
+                            platformName: browserTestRun.platform,
+                            assets: browserTestRun.assets,
+                            userAgent: userAgent,
+                        };
+                        try {
+                            const sessionId = await this.reporter.reportSession(session);
+                            this.setIndent(this.indentWidth * 4)
+                                .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(this.reporter.getJobURL(sessionId))}`)
+                                .newline();
+                            resolve(sessionId);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    })();
+                });
+                reportTasks.push(task);
+            }
+            await Promise.allSettled(reportTasks);
+            this.newline();
+        },
+
+        async reportFixtureStart (name, specPath) {
+            if (this.specPath && this.specPath !== specPath) {
+                // End of currently running spec
+                await this.reportFixture(this.sauceTestReport.currentFixture);
+            }
+            this.sauceTestReport.reportFixtureStart(name, specPath);
+
+            this.specPath = specPath;
+            this.relSpecPath = path.relative(process.cwd(), this.specPath);
+            this.specStartConsole(this.relSpecPath, this.sauceTestReport.fixtures.length);
 
             this.fixtureStartConsole(name);
         },
 
-        specStartConsole (relSpecPath) {
-            this.setIndent(1)
+        specStartConsole (relSpecPath, index) {
+            this.newline()
+                .setIndent(this.indentWidth * 2)
                 .useWordWrap(true)
-                .write(relSpecPath)
-                .newline();
-        },
-
-        specEndConsole (jobURL, userAgent) {
-            if (!jobURL) {
-                return;
-            }
-
-            this.setIndent(2)
-                .useWordWrap(true)
-                .newline()
-                .write(`Sauce Labs Report (${userAgent}): ${jobURL}`)
+                .write(`${index}) ${this.chalk.underline(relSpecPath)}`)
                 .newline();
         },
 
         fixtureStartConsole (name) {
-            this.setIndent(2)
+            this.setIndent(this.indentWidth * 3)
                 .useWordWrap(true);
 
             if (this.afterErrorList) {
@@ -120,7 +149,7 @@ module.exports = function () {
 
             let title = `${symbol} ${nameStyle(name)}`;
 
-            this.setIndent(2)
+            this.setIndent(this.indentWidth * 4)
                 .useWordWrap(true);
 
             if (testRunInfo.unstable) {
@@ -145,26 +174,8 @@ module.exports = function () {
         async reportTaskDone (endTime, passed, warnings) {
             this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
 
-            const sessions = this.sauceTestReport.sessions;
-            for (const s of [...sessions.values()]) {
-                try {
-                    const jobUrl = await this.reporter.reportSession({
-                        name: s.userAgent,
-                        startTime: s.startTime,
-                        endTime: s.endTime,
-                        userAgent: s.userAgent,
-                        browserName: s.browserName,
-                        browserVersion: s.browserVersion,
-                        platformName: s.platform,
-                        assets: s.assets,
-                        testRun: s.testRun,
-                    });
+            await this.reportFixture(this.sauceTestReport.currentFixture);
 
-                    this.specEndConsole(jobUrl, s.userAgent);
-                } catch (e) {
-                    this.error(`Sauce Labs Report Failed: ${e.message}`);
-                }
-            }
             this.taskDoneConsole(endTime, passed, warnings);
         },
 
@@ -181,10 +192,8 @@ module.exports = function () {
                 this.newline();
             }
 
-            this.setIndent(1)
-                .useWordWrap(true);
-
-            this.newline()
+            this.setIndent(this.indentWidth)
+                .useWordWrap(true)
                 .write(footer)
                 .newline();
 
@@ -199,7 +208,7 @@ module.exports = function () {
         },
 
         _renderErrors (errs) {
-            this.setIndent(3)
+            this.setIndent(this.indentWidth * 4)
                 .newline();
 
             errs.forEach((err, idx) => {
@@ -214,15 +223,15 @@ module.exports = function () {
 
         _renderWarnings (warnings) {
             this.newline()
-                .setIndent(1)
+                .setIndent(this.indentWidth * 4)
                 .write(this.chalk.bold.yellow(`Warnings (${warnings.length}):`))
                 .newline();
 
             warnings.forEach(msg => {
-                this.setIndent(1)
+                this.setIndent(this.indentWidth * 4)
                     .write(this.chalk.bold.yellow('--'))
                     .newline()
-                    .setIndent(2)
+                    .setIndent(this.indentWidth * 5)
                     .write(msg)
                     .newline();
             });
