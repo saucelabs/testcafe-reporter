@@ -58,3 +58,15 @@ testCafe
     .reporter('saucelabs') // <-
     .run();
 ```
+
+## Development
+
+### Local Testing
+
+In order to test the reporter, you'll need to link it to itself then run a test with the reporter set.
+
+```
+npm link
+npm link testcafe-reporter-saucelabs
+npx testcafe chrome tests/integration sauceswag.ok.test.js --reporter saucelabs
+```
