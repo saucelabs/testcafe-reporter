@@ -58,3 +58,28 @@ testCafe
     .reporter('saucelabs') // <-
     .run();
 ```
+
+## Development
+
+### Local Testing
+
+In order to test the reporter, you'll need to link it to itself then run a test with the reporter set.
+
+```
+$ npm link
+$ npm link testcafe-reporter-saucelabs
+$ npx testcafe chrome tests/integration sauceswag.ok.test.js --reporter saucelabs
+```
+
+#### Common Issues
+
+**Problem**
+
+```
+$ npx testcafe chrome tests/integration/sauceswag.test.js --reporter saucelabs
+ERROR The "saucelabs" reporter does not exist. Check the reporter parameter for errors.
+```
+
+**Solution**
+
+You need to re-link the package: `npm link && npm link testcafe-reporter-saucelabs`
