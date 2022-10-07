@@ -62,11 +62,11 @@ module.exports = function () {
                             userAgent: userAgent,
                         };
                         try {
-                            const sessionId = await this.reporter.reportSession(session);
+                            const job = await this.reporter.reportSession(session);
                             this.setIndent(this.indentWidth * 4)
-                                .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(this.reporter.getJobURL(sessionId))}`)
+                                .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(job.url)}`)
                                 .newline();
-                            resolve(sessionId);
+                            resolve(job.id);
                         } catch (e) {
                             reject(e);
                         }
