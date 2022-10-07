@@ -1,9 +1,10 @@
 /* eslint-env node */
-const SauceLabs = require('saucelabs').default;
+const { Region, TestComposer } = require('@saucelabs/testcomposer');
 const { Status } = require('@saucelabs/sauce-json-reporter');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const stream = require('stream');
 
 class Reporter {
     constructor (logger = console, opts = {}) {
@@ -21,17 +22,13 @@ class Reporter {
         this.build = opts.build || randomBuildID();
         this.tags = opts.tags;
         this.region = opts.region || 'us-west-1';
-        const tld = this.region === 'staging' ? 'net' : 'com';
 
-        this.api = new SauceLabs({
-            user:    this.username,
-            key:     this.accessKey,
-            region:  this.region,
-            tld:     tld,
-            headers: { 'User-Agent': `testcafe-reporter/${reporterVersion}` }
+        this.testComposer = new TestComposer({
+            region: opts.region || Region.USWest1,
+            username: this.username,
+            accessKey: this.accessKey,
+            headers: {'User-Agent': `cypress-reporter/${reporterVersion}`}
         });
-
-        this.session = null;
     }
 
     isAccountSet () {
@@ -43,58 +40,49 @@ class Reporter {
             return;
         }
 
-        const body = {
+        const job = await this.testComposer.createReport({
             name:             session.name,
-            user:             process.env.SAUCE_USERNAME,
             startTime:        session.startTime.toISOString(),
             endTime:          session.endTime.toISOString(),
             framework:        'testcafe',
             frameworkVersion: '0.0.0', // TODO https://github.com/DevExpress/testcafe/issues/6591
-            status:           'complete',
             passed:           session.testRun.computeStatus() === Status.Passed,
             build:            this.build,
             tags:             this.tags,
             browserName:      session.browserName,
             browserVersion:   session.browserVersion,
             platformName:     session.platformName,
-        };
-
-        const sessionId = await this.createJob(body);
+        });
 
         const assets = session.assets.map((a) => {
             return {
                 filename: a.name,
-                data: a.localPath
+                data: fs.createReadStream(a.localPath)
             };
         });
+
+        const reportReadable = new stream.Readable();
+        reportReadable.push(session.testRun.stringify());
+        reportReadable.push(null);
         assets.push({
             filename: 'sauce-test-report.json',
-            data: session.testRun,
+            data: reportReadable,
         });
+
         assets.push(this.createConsoleLog(session.testRun, session.userAgent));
 
-        await this.uploadAssets(sessionId, assets);
-
-        return sessionId;
-    }
-
-    async createJob (body) {
-        return await this.api.createJob(body).then(
-            (resp) => resp.ID
-        );
-    }
-
-    async uploadAssets (sessionId, assets) {
-        await this.api.uploadJobAssets(sessionId, { files: assets }).then(
+        await this.testComposer.uploadAssets(job.id, assets).then(
             (resp) => {
                 if (resp.errors) {
-                    for (let err of resp.errors) {
-                        this.log.error(err);
+                    for (const err of resp.errors) {
+                        console.error('Failed to upload asset:', err);
                     }
                 }
             },
-            (e) => this.log.error(`Upload failed: ${e.message}`)
+            (e) => console.error('Failed to upload assets:', e.message)
         );
+
+        return job;
     }
 
     logSuite (suite, depth = 0) {
@@ -135,20 +123,14 @@ class Reporter {
             log += '\n';
         }
 
+        const r = new stream.Readable();
+        r.push(log);
+        r.push(null);
+
         return {
             filename: 'console.log',
-            data:     log
+            data:     r
         };
-    }
-
-    getJobURL (sessionId) {
-        const domainMapping = {
-            'us-west-1':    'app.saucelabs.com',
-            'eu-central-1': 'app.eu-central-1.saucelabs.com',
-            'staging':      'app.staging.saucelabs.net'
-        };
-
-        return `https://${domainMapping[this.region]}/tests/${sessionId}`;
     }
 }
 
