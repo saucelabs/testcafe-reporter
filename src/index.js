@@ -146,8 +146,8 @@ module.exports = function () {
                 symbol = this.chalk.green(this.symbols.ok);
                 nameStyle = this.chalk.grey;
             }
-
-            let title = `${symbol} ${nameStyle(name)}`;
+            const nameInfo = `${name} (${testRunInfo.durationMs}ms)`;
+            let title = `${symbol} ${nameStyle(nameInfo)}`;
 
             this.setIndent(this.indentWidth * 4)
                 .useWordWrap(true);
