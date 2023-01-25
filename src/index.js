@@ -83,8 +83,7 @@ module.exports = function () {
 
             if (this.specPath && this.specPath !== specPath) {
                 // End of currently running spec
-                const completedFixture = this.sauceTestReport.fixtures.find((f) => f.path === this.specPath);
-                console.log(completedFixture);
+                const completedFixture = this.sauceTestReport.fixtures.find((f) => f.path === path.relative(process.cwd(), this.specPath));
                 await this.reportFixture(completedFixture);
             }
 
