@@ -1,10 +1,12 @@
-/* eslint-env node */
-const { Region, TestComposer } = require('@saucelabs/testcomposer');
-const { Status } = require('@saucelabs/sauce-json-reporter');
+const { Status, TestRun, Suite } = require('@saucelabs/sauce-json-reporter');
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 const stream = require('stream');
+const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
+import { Region, TestComposer } from '@saucelabs/testcomposer';
+import { TestRuns as TestRunsAPI } from './api';
+import { CI, IS_CI } from './ci';
 
 class Reporter {
     constructor (logger = console, opts = {}) {
@@ -29,10 +31,77 @@ class Reporter {
             accessKey: this.accessKey,
             headers: {'User-Agent': `cypress-reporter/${reporterVersion}`}
         });
+
+        this.testRunsAPI = new TestRunsAPI({
+            region: opts.region || Region.USWest1,
+            username: this.username,
+            accessKey: this.accessKey,
+        });
     }
 
     isAccountSet () {
         return this.username && this.accessKey;
+    }
+
+    /**
+     * Recursively compute the duration of the suite's tests and all its nested suites
+     * @param {Suite} suite
+     */
+    computeDuration (suite) {
+        if (suite.suites.length === 0) {
+            return suite.tests.reduce((acc, test) => acc + test.duration, 0);
+        }
+        let duration = 0;
+
+        suite.suites.forEach((s) => duration += this.computeDuration(s));
+
+        return duration;
+    }
+
+    /**
+     * @param {string} jobId
+     */
+    async reportTestRun (fixture, browserTestRun, jobId) {
+        /** @type TestRun */
+        const testRun = browserTestRun.testRun;
+        // NOTE: Compute duration directly from test duration and not from
+        // endDate and startDate. endDate is not particularly accurate
+        // because of the way TestCafe executes concurrent tests.
+        let duration = 0;
+        testRun.suites.forEach((s) => duration += this.computeDuration(s));
+
+        /** @type {import('./api').TestRunRequestBody} */
+        const req = {
+            id: uuidv4(),
+            name: fixture.path,
+            start_time: fixture.startTime.toISOString(),
+            end_time: fixture.endTime?.toISOString() || new Date().toISOString(),
+            duration,
+
+            platform: 'other',
+            type: 'web',
+            framework: 'testcafe',
+            sauce_job: {
+                id: jobId,
+            },
+            tags: this.tags,
+            build_name: this.build,
+            browser: `${browserTestRun.browserName} ${browserTestRun.browserVersion}`,
+            os: browserTestRun.platform,
+            status: browserTestRun.testRun.computeStatus(),
+            // TODO: errors
+        };
+
+        if (IS_CI) {
+            req.ci = {
+                ref_name: CI.refName,
+                branch: CI.refName,
+                repository: CI.repo,
+                commit_sha: CI.sha,
+            };
+        }
+
+        await this.testRunsAPI.create([req]);
     }
 
     async reportSession (session) {

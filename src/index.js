@@ -1,4 +1,3 @@
-/* eslint-env node */
 const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
 const { Reporter } = require('./reporter');
 const path = require('path');
@@ -53,7 +52,7 @@ module.exports = function () {
                         const session = {
                             name: fixture.path,
                             startTime: fixture.startTime,
-                            endTime: new Date(),
+                            endTime: fixture.endTime ?? new Date(),
                             testRun: browserTestRun.testRun,
                             browserName: browserTestRun.browserName,
                             browserVersion: browserTestRun.browserVersion,
@@ -63,6 +62,7 @@ module.exports = function () {
                         };
                         try {
                             const job = await this.reporter.reportSession(session);
+                            await this.reporter.reportTestRun(fixture, browserTestRun, job.id);
                             this.setIndent(this.indentWidth * 4)
                                 .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(job.url)}`)
                                 .newline();
@@ -79,11 +79,14 @@ module.exports = function () {
         },
 
         async reportFixtureStart (name, specPath) {
+            this.sauceTestReport.reportFixtureStart(name, specPath);
+
             if (this.specPath && this.specPath !== specPath) {
                 // End of currently running spec
-                await this.reportFixture(this.sauceTestReport.currentFixture);
+                const completedFixture = this.sauceTestReport.fixtures.find((f) => f.path === this.specPath);
+                console.log(completedFixture);
+                await this.reportFixture(completedFixture);
             }
-            this.sauceTestReport.reportFixtureStart(name, specPath);
 
             this.specPath = specPath;
             this.relSpecPath = path.relative(process.cwd(), this.specPath);
