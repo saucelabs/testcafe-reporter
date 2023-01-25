@@ -8,11 +8,13 @@
     "email": "devx@saucelabs.com",
     "url": "https://www.saucelabs.com"
   },
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
     "lint": "eslint src/",
     "release": "release-it --github.release",
     "release:ci": "npm run release -- --ci --no-git.requireCleanWorkingDir",
