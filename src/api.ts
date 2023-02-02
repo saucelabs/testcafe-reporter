@@ -95,7 +95,7 @@ export class TestRuns {
             debug('Failed to report test run data', util.inspect(data, { depth: null}));
             break;
           default:
-            debug('Unexpected http error while reporting test run data: %s', e.message);
+            debug('Unexpected http error while reporting test run data: %s', e);
         }
       } else {
         debug('Unexpected error while reporting test run data', e);
