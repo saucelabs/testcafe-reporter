@@ -44,7 +44,8 @@ class Reporter {
     }
 
     /**
-     * @param {Fixture} fixture
+     * Reports a fixture from testcafe-reporter-sauce-json/reporter to the test-runs api.
+     * @param {?} fixture
      * @param {string} jobId
      */
     async reportTestRun (fixture, jobId) {
@@ -58,7 +59,7 @@ class Reporter {
             sauce_job: {
                 id: jobId,
             },
-            tags: this.tags,
+            tags: this.tags || [],
             build_name: this.build,
             ci: {
                 ref_name: CI.refName,
@@ -68,15 +69,16 @@ class Reporter {
             },
         };
 
-        /** @type {import('./api').TestRunRequestBody[]} */
         let reqs = [];
         const browserTestRuns = [...fixture.browserTestRuns.values()];
         browserTestRuns.forEach((browserTestRun) => {
-            /** @type {typeof import('@saucelabs/sauce-json-reporter).TestRun} */
             const testRun = browserTestRun.testRun;
-            const tests = this.findTests(testRun.suites[0].suites);
+            // NOTE: TestRuns for TestCafe will have a single root suite that represents
+            // the spec. Since the spec path is a separate field in the Insights TestRun,
+            // we can ignore it when flattening the tests.
+            const tests = this.flattenTests(testRun.suites[0].suites);
             reqs = reqs.concat(tests.map((test) => {
-                return {
+                const req = {
                     ...baseRun,
                     id: uuidv4(),
                     name: test.name,
@@ -84,8 +86,16 @@ class Reporter {
                     browser: browserTestRun.browser,
                     os: browserTestRun.platform,
                     status: test.status,
-                    // TODO: errors
                 };
+                if (test.status === Status.Failed) {
+                    req.errors = [
+                        {
+                            message: test.output,
+                            path: fixture.path,
+                        },
+                    ];
+                }
+                return req;
             }));
         });
         await this.testRunsAPI.create(reqs);
@@ -97,10 +107,10 @@ class Reporter {
      * @param {string[]} names
      * @returns {Test[]}
      */
-    findTests (suites, names = []) {
+    flattenTests (suites, names = []) {
         let tests = [];
         suites.forEach((suite) => {
-            tests = tests.concat(this.findTests(suite.suites, [...names, suite.name]));
+            tests = tests.concat(this.flattenTests(suite.suites, [...names, suite.name]));
 
             suite.tests.forEach((test) => {
                 tests.push(new Test(

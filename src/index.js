@@ -62,10 +62,11 @@ module.exports = function () {
                         };
                         try {
                             const job = await this.reporter.reportSession(session);
-                            await this.reporter.reportTestRun(fixture, job.id);
                             this.setIndent(this.indentWidth * 4)
                                 .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(job.url)}`)
                                 .newline();
+
+                            await this.reporter.reportTestRun(fixture, job.id);
                             resolve(job.id);
                         } catch (e) {
                             reject(e);
