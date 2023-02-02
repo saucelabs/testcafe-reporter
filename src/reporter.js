@@ -1,10 +1,11 @@
-const { Status, Test } = require('@saucelabs/sauce-json-reporter');
-const path = require('path');
+const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
 const stream = require('stream');
 const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
+const { Status, Test } = require('@saucelabs/sauce-json-reporter');
 const { Region, TestComposer } = require('@saucelabs/testcomposer');
+
 const { TestRuns: TestRunsAPI } = require('./api');
 const { CI } = require('./ci');
 
