@@ -1,12 +1,13 @@
-const { Status, TestRun, Suite } = require('@saucelabs/sauce-json-reporter');
+const { Status, TestRun, Suite, Test } = require('@saucelabs/sauce-json-reporter');
 const path = require('path');
 const fs = require('fs');
 const stream = require('stream');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
+const { Fixture } = require('testcafe-reporter-sauce-json/fixture');
 import { Region, TestComposer } from '@saucelabs/testcomposer';
 import { TestRuns as TestRunsAPI } from './api';
-import { CI, IS_CI } from './ci';
+import { CI } from './ci';
 
 class Reporter {
     constructor (logger = console, opts = {}) {
@@ -44,40 +45,14 @@ class Reporter {
     }
 
     /**
-     * Recursively compute the duration of the suite's tests and all its nested suites
-     * @param {Suite} suite
-     */
-    computeDuration (suite) {
-        if (suite.suites.length === 0) {
-            return suite.tests.reduce((acc, test) => acc + test.duration, 0);
-        }
-        let duration = 0;
-
-        suite.suites.forEach((s) => duration += this.computeDuration(s));
-
-        return duration;
-    }
-
-    /**
+     * @param {Fixture} fixture
      * @param {string} jobId
      */
-    async reportTestRun (fixture, browserTestRun, jobId) {
-        /** @type TestRun */
-        const testRun = browserTestRun.testRun;
-        // NOTE: Compute duration directly from test duration and not from
-        // endDate and startDate. endDate is not particularly accurate
-        // because of the way TestCafe executes concurrent tests.
-        let duration = 0;
-        testRun.suites.forEach((s) => duration += this.computeDuration(s));
-
-        /** @type {import('./api').TestRunRequestBody} */
-        const req = {
-            id: uuidv4(),
-            name: fixture.path,
+    async reportTestRun (fixture, jobId) {
+        const baseRun = {
             start_time: fixture.startTime.toISOString(),
             end_time: fixture.endTime?.toISOString() || new Date().toISOString(),
-            duration,
-
+            path_name: fixture.path,
             platform: 'other',
             type: 'web',
             framework: 'testcafe',
@@ -86,23 +61,65 @@ class Reporter {
             },
             tags: this.tags,
             build_name: this.build,
-            browser: `${browserTestRun.browserName} ${browserTestRun.browserVersion}`,
-            os: browserTestRun.platform,
-            status: browserTestRun.testRun.computeStatus(),
-            // TODO: errors
-        };
-
-        if (IS_CI) {
-            req.ci = {
+            ci: {
                 ref_name: CI.refName,
                 branch: CI.refName,
                 repository: CI.repo,
                 commit_sha: CI.sha,
-            };
-        }
+            },
+        };
 
-        await this.testRunsAPI.create([req]);
+        /** @type {import('./api').TestRunRequestBody[]} */
+        let reqs = [];
+        const browserTestRuns = [...fixture.browserTestRuns.values()];
+        browserTestRuns.forEach((browserTestRun) => {
+            /** @type TestRun */
+            const testRun = browserTestRun.testRun;
+            const tests = this.findTests(testRun.suites[0].suites);
+            reqs = reqs.concat(tests.map((test) => {
+                return {
+                    ...baseRun,
+                    id: uuidv4(),
+                    name: test.name,
+                    duration: test.duration,
+                    browser: browserTestRun.browser,
+                    os: browserTestRun.platform,
+                    status: test.status,
+                    // TODO: errors
+                };
+            }));
+        });
+        await this.testRunsAPI.create(reqs);
     }
+
+    /**
+     * Recurses through suites and returns a flattened list of tests
+     * @param {Suite[]} suites
+     * @param {string[]} names
+     * @returns {Test[]}
+     */
+    findTests (suites, names = []) {
+        let tests = [];
+        suites.forEach((suite) => {
+            tests = tests.concat(this.findTests(suite.suites, [...names, suite.name]));
+
+            suite.tests.forEach((test) => {
+                tests.push(new Test(
+                    [...names, suite.name, test.name].join(' - '),
+                    test.status,
+                    test.duration,
+                    test.output,
+                    test.startTime,
+                    test.attachments,
+                    test.metadata,
+                    test.code,
+                    test.videoTimestamp,
+                ));
+            });
+        });
+        return tests;
+    }
+
 
     async reportSession (session) {
         if (!this.isAccountSet()) {
