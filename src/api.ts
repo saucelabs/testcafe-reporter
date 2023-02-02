@@ -83,9 +83,9 @@ export class TestRuns {
   async create(testRuns: TestRunRequestBody[]) {
     try {
       debug('Submitting test run to test-runs api', testRuns);
-      // await this.api.post<void>('/test-runs/v1/', {
-      //   test_runs: testRuns,
-      // });
+      await this.api.post<void>('/test-runs/v1/', {
+        test_runs: testRuns,
+      });
     } catch (e: unknown) {
       if (isAxiosError(e)) {
         let data;
