@@ -16,8 +16,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint src/",
-    "release": "release-it --github.release",
-    "release:ci": "npm run release -- --ci --no-git.requireCleanWorkingDir",
+    "release": "tsc && release-it --github.release",
+    "release:ci": "tsc && npm run release -- --ci --no-git.requireCleanWorkingDir",
     "release:patch": "npm run release -- patch",
     "release:minor": "npm run release -- minor",
     "release:major": "npm run release -- major"
