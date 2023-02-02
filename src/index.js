@@ -52,7 +52,7 @@ module.exports = function () {
                         const session = {
                             name: fixture.path,
                             startTime: fixture.startTime,
-                            endTime: fixture.endTime ?? new Date(),
+                            endTime: new Date(),
                             testRun: browserTestRun.testRun,
                             browserName: browserTestRun.browserName,
                             browserVersion: browserTestRun.browserVersion,

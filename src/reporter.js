@@ -1,13 +1,12 @@
-const { Status, TestRun, Suite, Test } = require('@saucelabs/sauce-json-reporter');
+const { Status, Test } = require('@saucelabs/sauce-json-reporter');
 const path = require('path');
 const fs = require('fs');
 const stream = require('stream');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
-const { Fixture } = require('testcafe-reporter-sauce-json/fixture');
-import { Region, TestComposer } from '@saucelabs/testcomposer';
-import { TestRuns as TestRunsAPI } from './api';
-import { CI } from './ci';
+const { Region, TestComposer } = require('@saucelabs/testcomposer');
+const { TestRuns: TestRunsAPI } = require('./api');
+const { CI } = require('./ci');
 
 class Reporter {
     constructor (logger = console, opts = {}) {
@@ -51,7 +50,7 @@ class Reporter {
     async reportTestRun (fixture, jobId) {
         const baseRun = {
             start_time: fixture.startTime.toISOString(),
-            end_time: fixture.endTime?.toISOString() || new Date().toISOString(),
+            end_time: (fixture.endTime && fixture.endTime.toISOString()) || new Date().toISOString(),
             path_name: fixture.path,
             platform: 'other',
             type: 'web',
@@ -73,7 +72,7 @@ class Reporter {
         let reqs = [];
         const browserTestRuns = [...fixture.browserTestRuns.values()];
         browserTestRuns.forEach((browserTestRun) => {
-            /** @type TestRun */
+            /** @type {typeof import('@saucelabs/sauce-json-reporter).TestRun} */
             const testRun = browserTestRun.testRun;
             const tests = this.findTests(testRun.suites[0].suites);
             reqs = reqs.concat(tests.map((test) => {
@@ -93,7 +92,7 @@ class Reporter {
     }
 
     /**
-     * Recurses through suites and returns a flattened list of tests
+     * Recurses through suites and returns a flattened list of tests.
      * @param {Suite[]} suites
      * @param {string[]} names
      * @returns {Test[]}
