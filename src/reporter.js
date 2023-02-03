@@ -30,7 +30,7 @@ class Reporter {
             region: opts.region || Region.USWest1,
             username: this.username,
             accessKey: this.accessKey,
-            headers: {'User-Agent': `cypress-reporter/${reporterVersion}`}
+            headers: {'User-Agent': `testcafe-reporter/${reporterVersion}`}
         });
 
         this.testRunsAPI = new TestRunsAPI({
