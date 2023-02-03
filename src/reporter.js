@@ -26,17 +26,21 @@ class Reporter {
         this.tags = opts.tags;
         this.region = opts.region || 'us-west-1';
 
+        const userAgent = `testcafe-reporter/${reporterVersion}`;
         this.testComposer = new TestComposer({
             region: opts.region || Region.USWest1,
             username: this.username,
             accessKey: this.accessKey,
-            headers: {'User-Agent': `testcafe-reporter/${reporterVersion}`}
+            headers: {'User-Agent': userAgent }
         });
 
         this.testRunsAPI = new TestRunsAPI({
             region: opts.region || Region.USWest1,
             username: this.username,
             accessKey: this.accessKey,
+            headers: {
+                'User-Agent': userAgent,
+            },
         });
     }
 

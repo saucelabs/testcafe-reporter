@@ -1,5 +1,5 @@
 import * as util from 'util';
-import axios, {AxiosInstance, isAxiosError} from 'axios';
+import axios, {AxiosInstance, RawAxiosRequestHeaders, isAxiosError} from 'axios';
 import Debug from 'debug';
 
 const debug = Debug('testcafe-reporter-saucelabs:api');
@@ -70,13 +70,14 @@ interface HTTPValidationError {
 export class TestRuns {
   private api: AxiosInstance;
 
-  constructor(opts: { username: string, accessKey: string, region: Region}) {
+  constructor(opts: { username: string, accessKey: string, region: Region, headers?: RawAxiosRequestHeaders}) {
     this.api = axios.create({
       auth: {
         username: opts.username,
         password: opts.accessKey,
       },
       baseURL: apiURLMap.get(opts.region),
+      headers: opts.headers,
     });
   }
 
