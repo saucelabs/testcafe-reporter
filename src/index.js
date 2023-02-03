@@ -66,7 +66,7 @@ module.exports = function () {
                                 .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(job.url)}`)
                                 .newline();
 
-                            await this.reporter.reportTestRun(fixture, job.id);
+                            await this.reporter.reportTestRun(fixture, browserTestRun, job.id);
                             resolve(job.id);
                         } catch (e) {
                             reject(e);

@@ -49,7 +49,7 @@ class Reporter {
      * @param {?} fixture
      * @param {string} jobId
      */
-    async reportTestRun (fixture, jobId) {
+    async reportTestRun (fixture, browserTestRun, jobId) {
         const baseRun = {
             start_time: fixture.startTime.toISOString(),
             end_time: (fixture.endTime && fixture.endTime.toISOString()) || new Date().toISOString(),
@@ -69,35 +69,30 @@ class Reporter {
                 commit_sha: CI.sha,
             },
         };
-
-        let reqs = [];
-        const browserTestRuns = [...fixture.browserTestRuns.values()];
-        browserTestRuns.forEach((browserTestRun) => {
-            const testRun = browserTestRun.testRun;
-            // NOTE: TestRuns for TestCafe will have a single root suite that represents
-            // the spec. Since the spec path is a separate field in the Insights TestRun,
-            // we can ignore it when flattening the tests.
-            const tests = this.flattenTests(testRun.suites[0].suites);
-            reqs = reqs.concat(tests.map((test) => {
-                const req = {
-                    ...baseRun,
-                    id: uuidv4(),
-                    name: test.name,
-                    duration: test.duration,
-                    browser: browserTestRun.browser,
-                    os: browserTestRun.platform,
-                    status: test.status,
-                };
-                if (test.status === Status.Failed) {
-                    req.errors = [
-                        {
-                            message: test.output,
-                            path: fixture.path,
-                        },
-                    ];
-                }
-                return req;
-            }));
+        const testRun = browserTestRun.testRun;
+        // NOTE: TestRuns for TestCafe will have a single root suite that represents
+        // the spec. Since the spec path is a separate field in the Insights TestRun,
+        // we can ignore it when flattening the tests.
+        const tests = this.flattenTests(testRun.suites[0].suites);
+        const reqs = tests.map((test) => {
+            const req = {
+                ...baseRun,
+                id: uuidv4(),
+                name: test.name,
+                duration: test.duration,
+                browser: browserTestRun.browser,
+                os: browserTestRun.platform,
+                status: test.status,
+            };
+            if (test.status === Status.Failed) {
+                req.errors = [
+                    {
+                        message: test.output,
+                        path: fixture.path,
+                    },
+                ];
+            }
+            return req;
         });
         await this.testRunsAPI.create(reqs);
     }
