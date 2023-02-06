@@ -1,10 +1,13 @@
-/* eslint-env node */
-const { Region, TestComposer } = require('@saucelabs/testcomposer');
-const { Status } = require('@saucelabs/sauce-json-reporter');
-const path = require('path');
-const fs = require('fs');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const stream = require('stream');
+const { v4: uuidv4 } = require('uuid');
+const { Status, Test } = require('@saucelabs/sauce-json-reporter');
+const { Region, TestComposer } = require('@saucelabs/testcomposer');
+
+const { TestRuns: TestRunsAPI } = require('./api');
+const { CI } = require('./ci');
 
 class Reporter {
     constructor (logger = console, opts = {}) {
@@ -23,17 +26,110 @@ class Reporter {
         this.tags = opts.tags;
         this.region = opts.region || 'us-west-1';
 
+        const userAgent = `testcafe-reporter/${reporterVersion}`;
         this.testComposer = new TestComposer({
             region: opts.region || Region.USWest1,
             username: this.username,
             accessKey: this.accessKey,
-            headers: {'User-Agent': `cypress-reporter/${reporterVersion}`}
+            headers: {'User-Agent': userAgent }
+        });
+
+        this.testRunsAPI = new TestRunsAPI({
+            region: opts.region || Region.USWest1,
+            username: this.username,
+            accessKey: this.accessKey,
+            headers: {
+                'User-Agent': userAgent,
+            },
         });
     }
 
     isAccountSet () {
         return this.username && this.accessKey;
     }
+
+    /**
+     * Reports a fixture from testcafe-reporter-sauce-json/reporter to the test-runs api.
+     * @param {?} fixture - A Fixture object from the testcafe-reporter-sauce-json/reporter package
+     * @param {?} browserTestRun - A BrowserTestRun object from the testcafe-reporter-sauce-json/reporter package
+     * @param {string} jobId
+     */
+    async reportTestRun (fixture, browserTestRun, jobId) {
+        const baseRun = {
+            start_time: fixture.startTime.toISOString(),
+            end_time: (fixture.endTime && fixture.endTime.toISOString()) || new Date().toISOString(),
+            path_name: fixture.path,
+            platform: 'other',
+            type: 'web',
+            framework: 'testcafe',
+            sauce_job: {
+                id: jobId,
+            },
+            tags: this.tags || [],
+            build_name: this.build,
+            ci: {
+                ref_name: CI.refName,
+                branch: CI.refName,
+                repository: CI.repo,
+                commit_sha: CI.sha,
+            },
+        };
+        const testRun = browserTestRun.testRun;
+        // NOTE: TestRuns for TestCafe will have a single root suite that represents
+        // the spec. Since the spec path is a separate field in the Insights TestRun,
+        // we can ignore it when flattening the tests.
+        const tests = this.flattenTests(testRun.suites[0].suites);
+        const reqs = tests.map((test) => {
+            const req = {
+                ...baseRun,
+                id: uuidv4(),
+                name: test.name,
+                duration: test.duration,
+                browser: browserTestRun.browser,
+                os: browserTestRun.platform,
+                status: test.status,
+            };
+            if (test.status === Status.Failed) {
+                req.errors = [
+                    {
+                        message: test.output,
+                        path: fixture.path,
+                    },
+                ];
+            }
+            return req;
+        });
+        await this.testRunsAPI.create(reqs);
+    }
+
+    /**
+     * Recurses through suites and returns a flattened list of tests.
+     * @param {Suite[]} suites
+     * @param {string[]} names
+     * @returns {Test[]}
+     */
+    flattenTests (suites, names = []) {
+        let tests = [];
+        suites.forEach((suite) => {
+            tests = tests.concat(this.flattenTests(suite.suites, [...names, suite.name]));
+
+            suite.tests.forEach((test) => {
+                tests.push(new Test(
+                    [...names, suite.name, test.name].join(' - '),
+                    test.status,
+                    test.duration,
+                    test.output,
+                    test.startTime,
+                    test.attachments,
+                    test.metadata,
+                    test.code,
+                    test.videoTimestamp,
+                ));
+            });
+        });
+        return tests;
+    }
+
 
     async reportSession (session) {
         if (!this.isAccountSet()) {

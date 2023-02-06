@@ -8,14 +8,16 @@
     "email": "devx@saucelabs.com",
     "url": "https://www.saucelabs.com"
   },
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
     "lint": "eslint src/",
-    "release": "release-it --github.release",
-    "release:ci": "npm run release -- --ci --no-git.requireCleanWorkingDir",
+    "release": "tsc && release-it --github.release",
+    "release:ci": "tsc && npm run release -- --ci --no-git.requireCleanWorkingDir",
     "release:patch": "npm run release -- patch",
     "release:minor": "npm run release -- minor",
     "release:major": "npm run release -- major"
@@ -28,12 +30,15 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@tsconfig/node14": "^1.0.3",
+    "@types/debug": "^4.1.7",
     "eslint": "^7.32.0",
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "release-it": "^15.5.0",
-    "testcafe": "^2.0.1"
+    "testcafe": "^2.0.1",
+    "typescript": "^4.9.5"
   },
   "peerDependencies": {
     "testcafe": "^1.0.1"
@@ -41,6 +46,9 @@
   "dependencies": {
     "@saucelabs/sauce-json-reporter": "^1.0.0",
     "@saucelabs/testcomposer": "^0.1.0",
-    "testcafe-reporter-sauce-json": "0.7.0"
+    "axios": "^1.2.4",
+    "debug": "^4.3.4",
+    "testcafe-reporter-sauce-json": "0.7.0",
+    "uuid": "^9.0.0"
   }
 }
