@@ -83,7 +83,6 @@ export class TestRuns {
 
   async create(testRuns: TestRunRequestBody[]) {
     try {
-      console.log('testRuns: ', testRuns)
       debug('Submitting test run to test-runs api', testRuns);
       await this.api.post<void>('/test-runs/v1/', {
         test_runs: testRuns,
