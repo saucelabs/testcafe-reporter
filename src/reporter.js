@@ -2,7 +2,6 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const stream = require('stream');
-const { v4: uuidv4 } = require('uuid');
 const { Status, Test } = require('@saucelabs/sauce-json-reporter');
 const { Region, TestComposer } = require('@saucelabs/testcomposer');
 
@@ -82,7 +81,6 @@ class Reporter {
         const reqs = tests.map((test) => {
             const req = {
                 ...baseRun,
-                id: uuidv4(),
                 name: test.name,
                 duration: test.duration,
                 browser: browserTestRun.browser,
