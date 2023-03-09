@@ -48,9 +48,9 @@ class Reporter {
     }
 
     /**
-     * Reports a fixture from testcafe-reporter-sauce-json/reporter to the test-runs api.
-     * @param {?} fixture - A Fixture object from the testcafe-reporter-sauce-json/reporter package
-     * @param {?} browserTestRun - A BrowserTestRun object from the testcafe-reporter-sauce-json/reporter package
+     * Reports a fixture from ./json-reporter to the test-runs api.
+     * @param {?} fixture - A Fixture object from the ./json-reporter package
+     * @param {?} browserTestRun - A BrowserTestRun object from the ./json-reporter package
      * @param {string} jobId
      */
     async reportTestRun (fixture, browserTestRun, jobId) {

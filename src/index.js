@@ -1,4 +1,4 @@
-const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
+const { SauceJsonReporter } = require('./json-reporter');
 const { Reporter } = require('./reporter');
 const path = require('path');
 
