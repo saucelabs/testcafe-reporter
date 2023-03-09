@@ -49,7 +49,6 @@
     "@saucelabs/sauce-json-reporter": "^1.0.0",
     "@saucelabs/testcomposer": "^0.1.0",
     "axios": "^1.2.4",
-    "debug": "^4.3.4",
-    "testcafe-reporter-sauce-json": "0.7.0"
+    "debug": "^4.3.4"
   }
 }
