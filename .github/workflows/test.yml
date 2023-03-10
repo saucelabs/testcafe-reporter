@@ -1,0 +1,27 @@
+name: testcafe-reporter tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  SAUCE_USERNAME: ${{secrets.SAUCE_USERNAME}}
+  SAUCE_ACCESS_KEY: ${{secrets.SAUCE_ACCESS_KEY}}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install deps
+        run: npm i
+
+      - name: Build Typescript Code
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test
