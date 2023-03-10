@@ -1,268 +1,235 @@
-const Stream = require('stream');
-const buildReporterPlugin = require('testcafe').embeddingUtils.buildReporterPlugin;
-const { SauceJsonReporter } = require('./json-reporter');
-const { Reporter } = require('./job-reporter-uploader');
+const crypto = require('crypto');
+const fs = require('fs');
 const path = require('path');
+const stream = require('stream');
+const { Status, Test } = require('@saucelabs/sauce-json-reporter');
+const { Region, TestComposer } = require('@saucelabs/testcomposer');
 
-function reporterFactory () {
-    return {
-        indentWidth:    2,
-        specPath:       '',
-        relSpecPath:    '',
-        fixtureName:    '',
-        afterErrorList: false,
-        startTime:      null,
-        startTimes:     new Map(),
+const { TestRuns: TestRunsAPI } = require('./api');
+const { CI } = require('./ci');
 
-        sauceTestReport: SauceJsonReporter.newReporter(),
+class Reporter {
+    constructor (logger = console, opts = {}) {
+        this.log = logger;
 
-        reportTaskStart (startTime, userAgents, testCount, testStructure, properties) {
-            this.reporter = new Reporter(this, properties.configuration.sauce);
-            this.startTime = startTime;
-            this.testCount = testCount;
-
-            this.taskStartConsole(userAgents);
-
-            this.sauceTestReport.reportTaskStart(startTime, userAgents, testCount);
-        },
-
-        taskStartConsole (userAgents) {
-            this.newline()
-                .useWordWrap(true)
-                .write(this.chalk.bold('Running tests in:'))
-                .newline();
-
-            userAgents.forEach(ua => {
-                this.setIndent(this.indentWidth)
-                    .write(`- ${this.chalk.cyan(ua)}`)
-                    .newline();
-            });
-
-            this.newline();
-        },
-
-        async reportFixture(fixture) {
-            this.setIndent(this.indentWidth * 3)
-                .newline()
-                .write(this.chalk.bold.underline('Sauce Labs Test Report'))
-                .newline();
-
-            const reportTasks = [];
-            for (const [userAgent, browserTestRun] of fixture.browserTestRuns) {
-                const task = new Promise((resolve, reject) => {
-                    (async () => {
-                        const session = {
-                            name: fixture.path,
-                            startTime: fixture.startTime,
-                            endTime: new Date(),
-                            testRun: browserTestRun.testRun,
-                            browserName: browserTestRun.browserName,
-                            browserVersion: browserTestRun.browserVersion,
-                            platformName: browserTestRun.platform,
-                            assets: browserTestRun.assets,
-                            userAgent: userAgent,
-                        };
-                        try {
-                            const job = await this.reporter.reportSession(session);
-                            this.setIndent(this.indentWidth * 4)
-                                .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(job.url)}`)
-                                .newline();
-
-                            await this.reporter.reportTestRun(fixture, browserTestRun, job.id);
-                            resolve(job.id);
-                        } catch (e) {
-                            reject(e);
-                        }
-                    })();
-                });
-                reportTasks.push(task);
-            }
-            await Promise.allSettled(reportTasks);
-            this.newline();
-        },
-
-        async reportFixtureStart (name, specPath) {
-            this.sauceTestReport.reportFixtureStart(name, specPath);
-
-            if (this.specPath && this.specPath !== specPath) {
-                // End of currently running spec
-                const completedFixture = this.sauceTestReport.fixtures.find((f) => f.path === path.relative(process.cwd(), this.specPath));
-                await this.reportFixture(completedFixture);
-            }
-
-            this.specPath = specPath;
-            this.relSpecPath = path.relative(process.cwd(), this.specPath);
-            this.specStartConsole(this.relSpecPath, this.sauceTestReport.fixtures.length);
-
-            this.fixtureStartConsole(name);
-        },
-
-        specStartConsole (relSpecPath, index) {
-            this.newline()
-                .setIndent(this.indentWidth * 2)
-                .useWordWrap(true)
-                .write(`${index}) ${this.chalk.underline(relSpecPath)}`)
-                .newline();
-        },
-
-        fixtureStartConsole (name) {
-            this.setIndent(this.indentWidth * 3)
-                .useWordWrap(true);
-
-            if (this.afterErrorList) {
-                this.afterErrorList = false;
-            }
-            else {
-                this.newline();
-            }
-
-            this.write(name)
-                .newline();
-        },
-
-        reportTestStart (name, meta, testStartInfo) {
-            this.sauceTestReport.reportTestStart(name, meta, testStartInfo);
-            this.startTimes.set(testStartInfo.testId, new Date());
-        },
-
-        async reportTestDone (name, testRunInfo) {
-            this.sauceTestReport.reportTestDone(name, testRunInfo);
-            this.testDoneConsole(name, testRunInfo);
-        },
-
-        testDoneConsole (name, testRunInfo) {
-            const hasErr = !!testRunInfo.errs.length;
-            let symbol = null;
-            let nameStyle = null;
-
-            if (testRunInfo.skipped) {
-                this.skipped++;
-
-                symbol = this.chalk.cyan('-');
-                nameStyle = this.chalk.cyan;
-            }
-
-            else if (hasErr) {
-                symbol = this.chalk.red.bold(this.symbols.err);
-                nameStyle = this.chalk.red.bold;
-            }
-
-            else {
-                symbol = this.chalk.green(this.symbols.ok);
-                nameStyle = this.chalk.grey;
-            }
-            const styledName = nameStyle(`${name} (${testRunInfo.durationMs}ms)`);
-            let title = `${symbol} ${styledName}`;
-
-            this.setIndent(this.indentWidth * 4)
-                .useWordWrap(true);
-
-            if (testRunInfo.unstable) {
-                title += this.chalk.yellow(' (unstable)');
-            }
-
-            if (testRunInfo.screenshotPath) {
-                title += ` (screenshots: ${this.chalk.underline.grey(testRunInfo.screenshotPath)})`;
-            }
-
-            this.write(title);
-
-            if (hasErr) {
-                this._renderErrors(testRunInfo.errs);
-            }
-
-            this.afterErrorList = hasErr;
-
-            this.newline();
-        },
-
-        async reportTaskDone (endTime, passed, warnings) {
-            this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
-
-            await this.reportFixture(this.sauceTestReport.currentFixture);
-
-            this.taskDoneConsole(endTime, passed, warnings);
-        },
-
-        taskDoneConsole (endTime, passed, warnings) {
-            const durationMs = endTime - this.startTime;
-            const durationStr = this.moment.duration(durationMs).format('h[h] mm[m] ss[s]');
-            let footer = passed === this.testCount ?
-                this.chalk.bold.green(`${this.testCount} passed`) :
-                this.chalk.bold.red(`${this.testCount - passed}/${this.testCount} failed`);
-
-            footer += this.chalk.grey(` (${durationStr})`);
-
-            if (!this.afterErrorList) {
-                this.newline();
-            }
-
-            this.setIndent(this.indentWidth)
-                .useWordWrap(true)
-                .write(footer)
-                .newline();
-
-            if (this.skipped > 0) {
-                this.write(this.chalk.cyan(`${this.skipped} skipped`))
-                    .newline();
-            }
-
-            if (warnings.length) {
-                this._renderWarnings(warnings);
-            }
-        },
-
-        _renderErrors (errs) {
-            this.setIndent(this.indentWidth * 4)
-                .newline();
-
-            errs.forEach((err, idx) => {
-                const prefix = this.chalk.red(`${idx + 1}) `);
-
-                this.newline()
-                    .write(this.formatError(err, prefix))
-                    .newline()
-                    .newline();
-            });
-        },
-
-        _renderWarnings (warnings) {
-            this.newline()
-                .setIndent(this.indentWidth * 4)
-                .write(this.chalk.bold.yellow(`Warnings (${warnings.length}):`))
-                .newline();
-
-            warnings.forEach(msg => {
-                this.setIndent(this.indentWidth * 4)
-                    .write(this.chalk.bold.yellow('--'))
-                    .newline()
-                    .setIndent(this.indentWidth * 5)
-                    .write(msg)
-                    .newline();
-            });
-        },
-
-        log (msg) {
-            this.write(msg).newline();
-        },
-
-        error (msg) {
-            this.newline()
-                .write(this.chalk.red(msg))
-                .newline();
+        let reporterVersion = 'unknown';
+        try {
+            const packageData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
+            reporterVersion = packageData.version;
+        } catch (e) {
         }
-    };
+
+        this.username = opts.username || process.env.SAUCE_USERNAME;
+        this.accessKey = opts.accessKey || process.env.SAUCE_ACCESS_KEY;
+        this.build = opts.build || randomBuildID();
+        this.tags = opts.tags;
+        this.region = opts.region || 'us-west-1';
+
+        const userAgent = `testcafe-reporter/${reporterVersion}`;
+        this.testComposer = new TestComposer({
+            region: opts.region || Region.USWest1,
+            username: this.username,
+            accessKey: this.accessKey,
+            headers: {'User-Agent': userAgent }
+        });
+
+        this.testRunsAPI = new TestRunsAPI({
+            region: opts.region || Region.USWest1,
+            username: this.username,
+            accessKey: this.accessKey,
+            headers: {
+                'User-Agent': userAgent,
+            },
+        });
+    }
+
+    isAccountSet () {
+        return this.username && this.accessKey;
+    }
+
+    /**
+     * Reports a fixture from ./json-reporter to the test-runs api.
+     * @param {?} fixture - A Fixture object from the ./json-reporter package
+     * @param {?} browserTestRun - A BrowserTestRun object from the ./json-reporter package
+     * @param {string} jobId
+     */
+    async reportTestRun (fixture, browserTestRun, jobId) {
+        const baseRun = {
+            start_time: fixture.startTime.toISOString(),
+            end_time: (fixture.endTime && fixture.endTime.toISOString()) || new Date().toISOString(),
+            path_name: fixture.path,
+            platform: 'other',
+            type: 'web',
+            framework: 'testcafe',
+            sauce_job: {
+                id: jobId,
+            },
+            tags: this.tags || [],
+            build_name: this.build,
+            ci: {
+                ref_name: CI.refName,
+                branch: CI.refName,
+                repository: CI.repo,
+                commit_sha: CI.sha,
+            },
+        };
+        const testRun = browserTestRun.testRun;
+        // NOTE: TestRuns for TestCafe will have a single root suite that represents
+        // the spec. Since the spec path is a separate field in the Insights TestRun,
+        // we can ignore it when flattening the tests.
+        const tests = this.flattenTests(testRun.suites[0].suites);
+        const reqs = tests.map((test) => {
+            const req = {
+                ...baseRun,
+                name: test.name,
+                duration: test.duration,
+                browser: browserTestRun.browser,
+                os: browserTestRun.platform,
+                status: test.status,
+            };
+            if (test.status === Status.Failed) {
+                req.errors = [
+                    {
+                        message: test.output,
+                        path: fixture.path,
+                    },
+                ];
+            }
+            return req;
+        });
+        await this.testRunsAPI.create(reqs);
+    }
+
+    /**
+     * Recurses through suites and returns a flattened list of tests.
+     * @param {Suite[]} suites
+     * @param {string[]} names
+     * @returns {Test[]}
+     */
+    flattenTests (suites, names = []) {
+        let tests = [];
+        suites.forEach((suite) => {
+            tests = tests.concat(this.flattenTests(suite.suites, [...names, suite.name]));
+
+            suite.tests.forEach((test) => {
+                tests.push(new Test(
+                    [...names, suite.name, test.name].join(' - '),
+                    test.status,
+                    test.duration,
+                    test.output,
+                    test.startTime,
+                    test.attachments,
+                    test.metadata,
+                    test.code,
+                    test.videoTimestamp,
+                ));
+            });
+        });
+        return tests;
+    }
+
+
+    async reportSession (session) {
+        if (!this.isAccountSet()) {
+            return;
+        }
+
+        const job = await this.testComposer.createReport({
+            name:             session.name,
+            startTime:        session.startTime.toISOString(),
+            endTime:          session.endTime.toISOString(),
+            framework:        'testcafe',
+            frameworkVersion: '0.0.0', // TODO https://github.com/DevExpress/testcafe/issues/6591
+            passed:           session.testRun.computeStatus() === Status.Passed,
+            build:            this.build,
+            tags:             this.tags,
+            browserName:      session.browserName,
+            browserVersion:   session.browserVersion,
+            platformName:     session.platformName,
+        });
+
+        const assets = session.assets.map((a) => {
+            return {
+                filename: a.name,
+                data: fs.createReadStream(a.localPath)
+            };
+        });
+
+        const reportReadable = new stream.Readable();
+        reportReadable.push(session.testRun.stringify());
+        reportReadable.push(null);
+        assets.push({
+            filename: 'sauce-test-report.json',
+            data: reportReadable,
+        });
+
+        assets.push(this.createConsoleLog(session.testRun, session.userAgent));
+
+        await this.testComposer.uploadAssets(job.id, assets).then(
+            (resp) => {
+                if (resp.errors) {
+                    for (const err of resp.errors) {
+                        console.error('Failed to upload asset:', err);
+                    }
+                }
+            },
+            (e) => console.error('Failed to upload assets:', e.message)
+        );
+
+        return job;
+    }
+
+    logSuite (suite, depth = 0) {
+        const indent = '    '.repeat(depth);
+        const resultIcon = suite.status === Status.Passed ? '✓' : '✖';
+        let log = `${indent}${resultIcon} ${suite.name}\n`;
+        for (const t of suite.tests) {
+            log += this.logTest(t, depth + 1);
+        }
+
+        for (const s of suite.suites) {
+            log += this.logSuite(s, depth + 1);
+        }
+
+        return log;
+    }
+
+    logTest (test, depth = 0) {
+        const indent = '    '.repeat(depth);
+        const resultIcon = test.status === Status.Passed ? '✓' : '✖';
+        const name = test.name;
+        const duration = test.duration;
+
+        let error = '';
+        if (test.status !== Status.Passed && test.output !== '') {
+            error = `\n\n${indent}\n${test.output}\n\n`;
+        }
+
+        return `${indent}${resultIcon} ${name} (${duration}ms)${error}\n`;
+    }
+
+    createConsoleLog (testRun, userAgent) {
+        let log = `Running tests in: ${userAgent}\n\n\n`;
+
+        log += 'Results:\n\n';
+        for (const s of testRun.suites) {
+            log += this.logSuite(s, 1);
+            log += '\n';
+        }
+
+        const r = new stream.Readable();
+        r.push(log);
+        r.push(null);
+
+        return {
+            filename: 'console.log',
+            data:     r
+        };
+    }
 }
 
-module.exports.SauceJobReporter = {
-    newReporter: function() {
-    // A writable sink to make sure the reporter has a stream to write to
-        const nullStream = new Stream.Writable();
-        nullStream._write = () => {};
+function randomBuildID () {
+    return crypto.randomBytes(6).readUIntLE(0, 6).toString(36);
+}
 
-        // Build the reporter plugin how it would be built at runtime.
-        // This gives the reporter access to all helper functions and behaves
-        // exactly like any other reporter plugin.
-        return buildReporterPlugin(reporterFactory, nullStream);
-    }
-};
+module.exports = { Reporter };
