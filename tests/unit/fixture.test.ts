@@ -1,5 +1,5 @@
 /* eslint-env node, jest */
-const { BrowserTestRun, Fixture } = require('../../../src/json-reporter/fixture');
+const { BrowserTestRun, Fixture } = require('../../src/fixture');
 const { Test, Status } = require('@saucelabs/sauce-json-reporter');
 
 
