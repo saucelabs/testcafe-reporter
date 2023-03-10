@@ -14,8 +14,8 @@ module.exports = function () {
             this.sauceJsonReporter.reportFixtureStart(name, path, meta);
         },
 
-        reportTestStart: async function(name, meta) {
-            this.sauceJsonReporter.reportTestStart(name, meta);
+        reportTestStart: async function(name, meta, testStartInfo) {
+            this.sauceJsonReporter.reportTestStart(name, meta, testStartInfo);
         },
 
         reportTestDone: async function(name, testRunInfo, meta) {
@@ -24,6 +24,10 @@ module.exports = function () {
 
         reportTaskDone: async function(endTime, passed, warnings, result) {
             this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
+
+            // SauceJson
+            const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
+            this.write(mergedTestRun.stringify());
         }
     };
 };
