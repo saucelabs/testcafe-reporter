@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const { SauceJsonReporter } = require('./json-reporter');
 const { JobReporter } = require('./job-reporter');
 
@@ -7,6 +8,7 @@ module.exports = function () {
         noColors: true,
         sauceJsonReporter: SauceJsonReporter.newReporter(),
 
+        sauceReportJsonPath: process.env.SAUCE_REPORT_JSON_PATH || './sauce-test-report.json',
         disableSauceUpload: process.env.SAUCELABS_DISABLE_SAUCE_UPLOAD !== undefined,
 
         // JobReporter
@@ -75,7 +77,8 @@ module.exports = function () {
         reportTaskDone: async function(endTime, passed, warnings, result) {
             this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
             const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
-            this.write(mergedTestRun.stringify());
+
+            fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
 
             if (this.disableSauceUpload) {
                 return;
