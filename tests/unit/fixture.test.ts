@@ -4,24 +4,29 @@ const { Test, Status } = require('@saucelabs/sauce-json-reporter');
 
 
 describe('BrowserTestRun', () => {
-    test.each([
+    [
         ['Chrome 97.0.4692.71 / macOS 10.15.7', 'Chrome', '97.0.4692.71'],
         ['Firefox 97 / macOS 10.15.7', 'Firefox', '97'],
         ['Firefox 97', 'Firefox', '97'],
         ['Firefox', 'Firefox', 'unknown'],
-    ])('can parse browser from userAgent (%s)', (userAgent: string, expectedBrowserName: string, expectedBrowserVersion: string) => {
-        const sut = new BrowserTestRun(userAgent);
+    ].forEach(([userAgent, expectedBrowserName, expectedBrowserVersion]) => {
+        test(`can parse browser from userAgent (${userAgent})`, async () => {
+            const sut = new BrowserTestRun(userAgent);
 
-        expect(sut.browserName).toBe(expectedBrowserName);
-        expect(sut.browserVersion).toBe(expectedBrowserVersion);
+            expect(sut.browserName).toBe(expectedBrowserName);
+            expect(sut.browserVersion).toBe(expectedBrowserVersion);
+        });
     });
-    test.each([
+
+    [
         ['Chrome 97.0.4692.71 / macOS 10.15.7', 'macOS 10.15.7'],
         ['Firefox 97 / macOS', 'macOS'],
-    ])('can parse platform from userAgent (%s)', (userAgent: string, expectedPlatform: string) => {
-        const sut = new BrowserTestRun(userAgent);
+    ].forEach(([userAgent, expectedPlatform]) => {
+        test(`can parse platform from userAgent (${userAgent})`, async () => {
+            const sut = new BrowserTestRun(userAgent);
 
-        expect(sut.platform).toBe(expectedPlatform);
+            expect(sut.platform).toBe(expectedPlatform);
+        });
     });
 });
 
