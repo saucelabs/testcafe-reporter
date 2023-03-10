@@ -9,7 +9,7 @@ module.exports = function () {
         sauceJsonReporter: SauceJsonReporter.newReporter(),
 
         sauceReportJsonPath: process.env.SAUCELABS_REPORT_JSON_PATH || './sauce-test-report.json',
-        disableSauceUpload: process.env.SAUCELABS_DISABLE_SAUCE_UPLOAD !== undefined,
+        disableUpload: process.env.SAUCELABS_DISABLE_UPLOAD !== undefined,
 
         // JobReporter
         indentWidth:    2,
@@ -24,7 +24,7 @@ module.exports = function () {
         reportTaskStart: async function(startTime, userAgents, testCount, testStructure, properties) {            
             this.sauceJsonReporter.reportTaskStart(startTime, userAgents, testCount);
 
-            if (this.disableSauceUpload) {
+            if (this.disableUpload) {
                 return;
             }
 
@@ -37,7 +37,7 @@ module.exports = function () {
         reportFixtureStart: async function(name, specPath, meta) {
             this.sauceJsonReporter.reportFixtureStart(name, specPath, meta);
 
-            if (this.disableSauceUpload) {
+            if (this.disableUpload) {
                 return;
             }
 
@@ -57,7 +57,7 @@ module.exports = function () {
         reportTestStart: async function(name, meta, testStartInfo) {
             this.sauceJsonReporter.reportTestStart(name, meta, testStartInfo);
 
-            if (this.disableSauceUpload) {
+            if (this.disableUpload) {
                 return;
             }
 
@@ -67,7 +67,7 @@ module.exports = function () {
         reportTestDone: async function(name, testRunInfo, meta) {
             this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
 
-            if (this.disableSauceUpload) {
+            if (this.disableUpload) {
                 return;
             }
 
@@ -80,7 +80,7 @@ module.exports = function () {
 
             fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
 
-            if (this.disableSauceUpload) {
+            if (this.disableUpload) {
                 return;
             }
 
