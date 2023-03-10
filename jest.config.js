@@ -1,7 +1,6 @@
-/** @type {import('jest').Config} */
-const config = {
-    verbose: true,
-    testMatch: ['**/tests/unit/**/*.test.js'],
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+module.exports = {
+    preset: 'ts-jest',
+    testEnvironment: 'node',
+    testMatch: ['**/tests/unit/**/*.test.[jt]s'],
 };
-
-module.exports = config;
