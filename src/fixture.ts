@@ -18,8 +18,7 @@ class BrowserTestRun {
     constructor(userAgent: string) {
         this.userAgent = userAgent;
         this.testRun = new TestRun();
-        // @ts-ignore
-        this.testRun.metadata['userAgent'] = userAgent;
+        (this.testRun.metadata as { userAgent: string })['userAgent'] = userAgent;
         this.assets = [];
 
         const [ browser, platform ] = userAgent.split('/').map((ua) => ua.trim());
