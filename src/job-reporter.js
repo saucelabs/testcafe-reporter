@@ -1,8 +1,10 @@
-const { SauceJsonReporter } = require('../json-reporter');
-const { Reporter } = require('./reporter');
+const Stream = require('stream');
+const buildReporterPlugin = require('testcafe').embeddingUtils.buildReporterPlugin;
+const { SauceJsonReporter } = require('./json-reporter');
+const { Reporter } = require('./job-reporter-uploader');
 const path = require('path');
 
-module.exports = function () {
+function reporterFactory () {
     return {
         indentWidth:    2,
         specPath:       '',
@@ -250,4 +252,17 @@ module.exports = function () {
                 .newline();
         }
     };
+}
+
+module.exports.SauceJobReporter = {
+    newReporter: function() {
+    // A writable sink to make sure the reporter has a stream to write to
+        const nullStream = new Stream.Writable();
+        nullStream._write = () => {};
+
+        // Build the reporter plugin how it would be built at runtime.
+        // This gives the reporter access to all helper functions and behaves
+        // exactly like any other reporter plugin.
+        return buildReporterPlugin(reporterFactory, nullStream);
+    }
 };
