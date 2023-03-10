@@ -7,7 +7,9 @@ module.exports = function () {
         noColors: true,
         sauceJsonReporter: SauceJsonReporter.newReporter(),
 
-        // SauceJobReporter
+        disableSauceUpload: process.env.SAUCELABS_DISABLE_SAUCE_UPLOAD !== undefined,
+
+        // JobReporter
         indentWidth:    2,
         specPath:       '',
         relSpecPath:    '',
@@ -20,16 +22,23 @@ module.exports = function () {
         reportTaskStart: async function(startTime, userAgents, testCount, testStructure, properties) {            
             this.sauceJsonReporter.reportTaskStart(startTime, userAgents, testCount);
 
-            // SauceJobReporter
+            if (this.disableSauceUpload) {
+                return;
+            }
+
             this.reporter = new Reporter(this, properties.configuration.sauce);
             this.startTime = startTime;
             this.testCount = testCount;
-            this.taskStartConsole(userAgents);        },
+            this.taskStartConsole(userAgents);
+        },
 
         reportFixtureStart: async function(name, specPath, meta) {
             this.sauceJsonReporter.reportFixtureStart(name, specPath, meta);
 
-            // SauceJobReporter
+            if (this.disableSauceUpload) {
+                return;
+            }
+
             if (this.specPath && this.specPath !== specPath) {
                 // End of currently running spec
                 const completedFixture = this.sauceJsonReporter.fixtures.find((f) => f.path === path.relative(process.cwd(), this.specPath));
@@ -46,14 +55,20 @@ module.exports = function () {
         reportTestStart: async function(name, meta, testStartInfo) {
             this.sauceJsonReporter.reportTestStart(name, meta, testStartInfo);
 
-            // SauceJobReporter
+            if (this.disableSauceUpload) {
+                return;
+            }
+
             this.startTimes.set(testStartInfo.testId, new Date());
         },
 
         reportTestDone: async function(name, testRunInfo, meta) {
             this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
 
-            // SauceJobReporter
+            if (this.disableSauceUpload) {
+                return;
+            }
+
             this.testDoneConsole(name, testRunInfo);
         },
 
@@ -62,13 +77,16 @@ module.exports = function () {
             const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
             this.write(mergedTestRun.stringify());
 
-            // SauceJobReporter
+            if (this.disableSauceUpload) {
+                return;
+            }
+
             await this.reportFixture(this.sauceJsonReporter.currentFixture);
 
             this.taskDoneConsole(endTime, passed, warnings);
         },
 
-        // SauceJobReporter - Extraneous funcs
+        // Extraneous funcs - Used by JobReporter
         taskStartConsole (userAgents) {
             this.newline()
                 .useWordWrap(true)
