@@ -1,6 +1,6 @@
 const path = require('path');
 const { SauceJsonReporter } = require('./json-reporter');
-const { Reporter } = require('./job-reporter');
+const { JobReporter } = require('./job-reporter');
 
 module.exports = function () {
     return {
@@ -26,7 +26,7 @@ module.exports = function () {
                 return;
             }
 
-            this.reporter = new Reporter(this, properties.configuration.sauce);
+            this.reporter = new JobReporter(this, properties.configuration.sauce);
             this.startTime = startTime;
             this.testCount = testCount;
             this.taskStartConsole(userAgents);

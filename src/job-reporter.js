@@ -8,7 +8,7 @@ const { Region, TestComposer } = require('@saucelabs/testcomposer');
 const { TestRuns: TestRunsAPI } = require('./api');
 const { CI } = require('./ci');
 
-class Reporter {
+class JobReporter {
     constructor (logger = console, opts = {}) {
         this.log = logger;
 
@@ -232,4 +232,4 @@ function randomBuildID () {
     return crypto.randomBytes(6).readUIntLE(0, 6).toString(36);
 }
 
-module.exports = { Reporter };
+module.exports = { JobReporter };
