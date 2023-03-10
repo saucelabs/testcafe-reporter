@@ -8,7 +8,7 @@ module.exports = function () {
         noColors: true,
         sauceJsonReporter: SauceJsonReporter.newReporter(),
 
-        sauceReportJsonPath: process.env.SAUCE_REPORT_JSON_PATH || './sauce-test-report.json',
+        sauceReportJsonPath: process.env.SAUCELABS_REPORT_JSON_PATH || './sauce-test-report.json',
         disableSauceUpload: process.env.SAUCELABS_DISABLE_SAUCE_UPLOAD !== undefined,
 
         // JobReporter
