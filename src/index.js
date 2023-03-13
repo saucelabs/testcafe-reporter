@@ -8,8 +8,8 @@ module.exports = function () {
         noColors: true,
         sauceJsonReporter: SauceJsonReporter.newReporter(),
 
-        sauceReportJsonPath: process.env.SAUCELABS_REPORT_JSON_PATH || './sauce-test-report.json',
-        disableUpload: process.env.SAUCELABS_DISABLE_UPLOAD !== undefined,
+        sauceReportJsonPath: process.env.SAUCE_REPORT_JSON_PATH || './sauce-test-report.json',
+        disableUpload: process.env.SAUCE_DISABLE_UPLOAD !== undefined,
 
         // JobReporter
         indentWidth:    2,
