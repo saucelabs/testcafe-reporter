@@ -8,7 +8,7 @@ const { Region, TestComposer } = require('@saucelabs/testcomposer');
 const { TestRuns: TestRunsAPI } = require('./api');
 const { CI } = require('./ci');
 
-class Reporter {
+class JobReporter {
     constructor (logger = console, opts = {}) {
         this.log = logger;
 
@@ -48,9 +48,9 @@ class Reporter {
     }
 
     /**
-     * Reports a fixture from testcafe-reporter-sauce-json/reporter to the test-runs api.
-     * @param {?} fixture - A Fixture object from the testcafe-reporter-sauce-json/reporter package
-     * @param {?} browserTestRun - A BrowserTestRun object from the testcafe-reporter-sauce-json/reporter package
+     * Reports a fixture from ./json-reporter to the test-runs api.
+     * @param {?} fixture - A Fixture object from the ./json-reporter package
+     * @param {?} browserTestRun - A BrowserTestRun object from the ./json-reporter package
      * @param {string} jobId
      */
     async reportTestRun (fixture, browserTestRun, jobId) {
@@ -232,4 +232,4 @@ function randomBuildID () {
     return crypto.randomBytes(6).readUIntLE(0, 6).toString(36);
 }
 
-module.exports = { Reporter };
+module.exports = { JobReporter };

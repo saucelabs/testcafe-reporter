@@ -1,9 +1,17 @@
-const { SauceJsonReporter } = require('testcafe-reporter-sauce-json/reporter');
-const { Reporter } = require('./reporter');
 const path = require('path');
+const fs = require('fs');
+const { SauceJsonReporter } = require('./json-reporter');
+const { JobReporter } = require('./job-reporter');
 
 module.exports = function () {
     return {
+        noColors: true,
+        sauceJsonReporter: SauceJsonReporter.newReporter(),
+
+        sauceReportJsonPath: process.env.SAUCE_REPORT_JSON_PATH || './sauce-test-report.json',
+        disableUpload: process.env.SAUCE_DISABLE_UPLOAD !== undefined,
+
+        // JobReporter
         indentWidth:    2,
         specPath:       '',
         relSpecPath:    '',
@@ -12,18 +20,76 @@ module.exports = function () {
         startTime:      null,
         startTimes:     new Map(),
 
-        sauceTestReport: SauceJsonReporter.newReporter(),
+        // TestCafe Hooks
+        reportTaskStart: async function(startTime, userAgents, testCount, testStructure, properties) {            
+            this.sauceJsonReporter.reportTaskStart(startTime, userAgents, testCount);
 
-        reportTaskStart (startTime, userAgents, testCount, testStructure, properties) {
-            this.reporter = new Reporter(this, properties.configuration.sauce);
+            if (this.disableUpload) {
+                return;
+            }
+
+            this.reporter = new JobReporter(this, properties.configuration.sauce);
             this.startTime = startTime;
             this.testCount = testCount;
-
             this.taskStartConsole(userAgents);
-
-            this.sauceTestReport.reportTaskStart(startTime, userAgents, testCount);
         },
 
+        reportFixtureStart: async function(name, specPath, meta) {
+            this.sauceJsonReporter.reportFixtureStart(name, specPath, meta);
+
+            if (this.disableUpload) {
+                return;
+            }
+
+            if (this.specPath && this.specPath !== specPath) {
+                // End of currently running spec
+                const completedFixture = this.sauceJsonReporter.fixtures.find((f) => f.path === path.relative(process.cwd(), this.specPath));
+                await this.reportFixture(completedFixture);
+            }
+
+            this.specPath = specPath;
+            this.relSpecPath = path.relative(process.cwd(), this.specPath);
+            this.specStartConsole(this.relSpecPath, this.sauceJsonReporter.fixtures.length);
+
+            this.fixtureStartConsole(name);
+        },
+
+        reportTestStart: async function(name, meta, testStartInfo) {
+            this.sauceJsonReporter.reportTestStart(name, meta, testStartInfo);
+
+            if (this.disableUpload) {
+                return;
+            }
+
+            this.startTimes.set(testStartInfo.testId, new Date());
+        },
+
+        reportTestDone: async function(name, testRunInfo, meta) {
+            this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
+
+            if (this.disableUpload) {
+                return;
+            }
+
+            this.testDoneConsole(name, testRunInfo);
+        },
+
+        reportTaskDone: async function(endTime, passed, warnings, result) {
+            this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
+            const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
+
+            fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
+
+            if (this.disableUpload) {
+                return;
+            }
+
+            await this.reportFixture(this.sauceJsonReporter.currentFixture);
+
+            this.taskDoneConsole(endTime, passed, warnings);
+        },
+
+        // Extraneous funcs - Used by JobReporter
         taskStartConsole (userAgents) {
             this.newline()
                 .useWordWrap(true)
@@ -79,22 +145,6 @@ module.exports = function () {
             this.newline();
         },
 
-        async reportFixtureStart (name, specPath) {
-            this.sauceTestReport.reportFixtureStart(name, specPath);
-
-            if (this.specPath && this.specPath !== specPath) {
-                // End of currently running spec
-                const completedFixture = this.sauceTestReport.fixtures.find((f) => f.path === path.relative(process.cwd(), this.specPath));
-                await this.reportFixture(completedFixture);
-            }
-
-            this.specPath = specPath;
-            this.relSpecPath = path.relative(process.cwd(), this.specPath);
-            this.specStartConsole(this.relSpecPath, this.sauceTestReport.fixtures.length);
-
-            this.fixtureStartConsole(name);
-        },
-
         specStartConsole (relSpecPath, index) {
             this.newline()
                 .setIndent(this.indentWidth * 2)
@@ -116,16 +166,6 @@ module.exports = function () {
 
             this.write(name)
                 .newline();
-        },
-
-        reportTestStart (name, meta, testStartInfo) {
-            this.sauceTestReport.reportTestStart(name, meta, testStartInfo);
-            this.startTimes.set(testStartInfo.testId, new Date());
-        },
-
-        async reportTestDone (name, testRunInfo) {
-            this.sauceTestReport.reportTestDone(name, testRunInfo);
-            this.testDoneConsole(name, testRunInfo);
         },
 
         testDoneConsole (name, testRunInfo) {
@@ -172,14 +212,6 @@ module.exports = function () {
             this.afterErrorList = hasErr;
 
             this.newline();
-        },
-
-        async reportTaskDone (endTime, passed, warnings) {
-            this.sauceTestReport.reportTaskDone(endTime, passed, warnings);
-
-            await this.reportFixture(this.sauceTestReport.currentFixture);
-
-            this.taskDoneConsole(endTime, passed, warnings);
         },
 
         taskDoneConsole (endTime, passed, warnings) {
@@ -248,6 +280,6 @@ module.exports = function () {
             this.newline()
                 .write(this.chalk.red(msg))
                 .newline();
-        }
+        },
     };
 };
