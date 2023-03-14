@@ -8,7 +8,7 @@
     "email": "devx@saucelabs.com",
     "url": "https://www.saucelabs.com"
   },
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "files": [
     "dist"
   ],
@@ -44,7 +44,7 @@
     "typescript": "^4.9.5"
   },
   "peerDependencies": {
-    "testcafe": "^1.0.1"
+    "testcafe": ">=1.0.1"
   },
   "dependencies": {
     "@saucelabs/sauce-json-reporter": "^1.0.0",
