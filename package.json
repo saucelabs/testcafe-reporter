@@ -31,7 +31,7 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@tsconfig/node14": "^1.0.3",
+    "@tsconfig/node18": "2.0.1",
     "@types/debug": "^4.1.7",
     "@types/jest": "^29.4.0",
     "eslint": "^7.32.0",
