@@ -1,4 +1,4 @@
-name: tests
+name: Test
 
 on:
   pull_request:
@@ -15,13 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Install deps
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Dependencies
         run: npm i
 
-      - name: Build Typescript Code
+      - name: Build
         run: npm run build
 
-      - name: Run tests
+      - name: Test
         run: npm run test
