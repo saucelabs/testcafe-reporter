@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const { SauceJsonReporter } = require('./json-reporter');
-const { JobReporter } = require('./job-reporter');
+const {SauceJsonReporter} = require('./json-reporter');
+const {JobReporter} = require('./job-reporter');
 
 module.exports = function () {
     return {
@@ -12,16 +12,16 @@ module.exports = function () {
         disableUpload: process.env.SAUCE_DISABLE_UPLOAD !== undefined,
 
         // JobReporter
-        indentWidth:    2,
-        specPath:       '',
-        relSpecPath:    '',
-        fixtureName:    '',
+        indentWidth: 2,
+        specPath: '',
+        relSpecPath: '',
+        fixtureName: '',
         afterErrorList: false,
-        startTime:      null,
-        startTimes:     new Map(),
+        startTime: null,
+        startTimes: new Map(),
 
         // TestCafe Hooks
-        reportTaskStart: async function(startTime, userAgents, testCount, testStructure, properties) {
+        reportTaskStart: async function (startTime, userAgents, testCount, testStructure, properties) {
             this.sauceJsonReporter.reportTaskStart(startTime, userAgents, testCount);
 
             if (this.disableUpload) {
@@ -34,7 +34,7 @@ module.exports = function () {
             this.taskStartConsole(startTime, userAgents, testCount);
         },
 
-        reportFixtureStart: async function(name, specPath, meta) {
+        reportFixtureStart: async function (name, specPath, meta) {
             this.sauceJsonReporter.reportFixtureStart(name, specPath, meta);
 
             if (this.disableUpload) {
@@ -54,7 +54,7 @@ module.exports = function () {
             this.fixtureStartConsole(name, specPath, meta);
         },
 
-        reportTestStart: async function(name, meta, testStartInfo) {
+        reportTestStart: async function (name, meta, testStartInfo) {
             this.sauceJsonReporter.reportTestStart(name, meta, testStartInfo);
 
             if (this.disableUpload) {
@@ -64,7 +64,7 @@ module.exports = function () {
             this.startTimes.set(testStartInfo.testId, new Date());
         },
 
-        reportTestDone: async function(name, testRunInfo, meta) {
+        reportTestDone: async function (name, testRunInfo, meta) {
             this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
 
             if (this.disableUpload) {
@@ -74,7 +74,7 @@ module.exports = function () {
             this.testDoneConsole(name, testRunInfo, meta);
         },
 
-        reportTaskDone: async function(endTime, passed, warnings, result) {
+        reportTaskDone: async function (endTime, passed, warnings, result) {
             this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
             const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
 
@@ -90,7 +90,7 @@ module.exports = function () {
         },
 
         // Extraneous funcs - Used by JobReporter
-        taskStartConsole (startTime, userAgents, testCount) {
+        taskStartConsole(startTime, userAgents, testCount) {
             this.setIndent(this.indentWidth)
                 .newline()
                 .useWordWrap(true)
@@ -105,7 +105,10 @@ module.exports = function () {
         },
 
         async reportFixture(fixture) {
-            // TODO check if user account is set up for reporting; if not, log the skip
+            if (!this.reporter.isAccountSet()) {
+                return;
+            }
+
             this.setIndent(this.indentWidth * 3)
                 .newline()
                 .write(this.chalk.bold.underline('Sauce Labs Test Report'))
@@ -145,7 +148,7 @@ module.exports = function () {
             this.newline();
         },
 
-        specStartConsole (relSpecPath, index) {
+        specStartConsole(relSpecPath, index) {
             this.newline()
                 .setIndent(this.indentWidth * 2)
                 .useWordWrap(true)
@@ -153,14 +156,13 @@ module.exports = function () {
                 .newline();
         },
 
-        fixtureStartConsole (name, specPath, meta) {
+        fixtureStartConsole(name, specPath, meta) {
             this.setIndent(this.indentWidth)
                 .useWordWrap(true);
 
             if (this.afterErrorList) {
                 this.afterErrorList = false;
-            }
-            else {
+            } else {
                 this.newline();
             }
 
@@ -168,7 +170,7 @@ module.exports = function () {
                 .newline();
         },
 
-        testDoneConsole (name, testRunInfo, meta) {
+        testDoneConsole(name, testRunInfo, meta) {
             const hasErr = !!testRunInfo.errs.length;
             let symbol = null;
             let nameStyle = null;
@@ -178,14 +180,10 @@ module.exports = function () {
 
                 symbol = this.chalk.cyan('-');
                 nameStyle = this.chalk.cyan;
-            }
-
-            else if (hasErr) {
+            } else if (hasErr) {
                 symbol = this.chalk.red.bold(this.symbols.err);
                 nameStyle = this.chalk.red.bold;
-            }
-
-            else {
+            } else {
                 symbol = this.chalk.green(this.symbols.ok);
                 nameStyle = this.chalk.grey;
             }
@@ -216,7 +214,7 @@ module.exports = function () {
             this.newline();
         },
 
-        taskDoneConsole (endTime, passed, warnings) {
+        taskDoneConsole(endTime, passed, warnings) {
             const durationMs = endTime - this.startTime;
             const durationStr = this.moment.duration(durationMs).format('h[h] mm[m] ss[s]');
             let footer = passed === this.testCount ?
@@ -245,7 +243,7 @@ module.exports = function () {
         },
 
 
-        _renderReportData (reportData, browsers, name, testRunInfo, meta) {
+        _renderReportData(reportData, browsers, name, testRunInfo, meta) {
             if (!reportData)
                 return;
 
@@ -253,13 +251,13 @@ module.exports = function () {
                 return;
 
             const renderBrowserName = browsers.length > 1;
-            const dataIndent        = browsers.length > 1 ? 3 : 2;
+            const dataIndent = browsers.length > 1 ? 3 : 2;
 
             this.newline()
                 .setIndent(this.indentWidth)
                 .write('Report data:');
 
-            browsers.forEach(({ testRunId, prettyUserAgent }) => {
+            browsers.forEach(({testRunId, prettyUserAgent}) => {
                 const browserReportData = reportData[testRunId];
 
                 if (!browserReportData)
@@ -279,7 +277,7 @@ module.exports = function () {
             });
         },
 
-        _renderErrors (errs, name, testRunInfo, meta) {
+        _renderErrors(errs, name, testRunInfo, meta) {
             this.setIndent(this.indentWidth * 3)
                 .newline();
 
@@ -293,7 +291,7 @@ module.exports = function () {
             });
         },
 
-        _renderWarnings (warnings) {
+        _renderWarnings(warnings) {
             this.newline()
                 .setIndent(this.indentWidth * 4)
                 .write(this.chalk.bold.yellow(`Warnings (${warnings.length}):`))
@@ -309,11 +307,11 @@ module.exports = function () {
             });
         },
 
-        log (msg) {
+        log(msg) {
             this.write(msg).newline();
         },
 
-        error (msg) {
+        error(msg) {
             this.newline()
                 .write(this.chalk.red(msg))
                 .newline();
