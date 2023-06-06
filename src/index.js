@@ -186,7 +186,6 @@ module.exports = function () {
                 symbol = this.chalk.green(this.symbols.ok);
                 nameStyle = this.chalk.grey;
             }
-            // const styledName = nameStyle(`${name} (${testRunInfo.durationMs}ms)`);
             let title = `${symbol} ${nameStyle(name)} (${testRunInfo.durationMs}ms)`;
 
             this.setIndent(this.indentWidth)
