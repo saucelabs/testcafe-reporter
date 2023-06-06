@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const stream = require('stream');
 const { Status, Test } = require('@saucelabs/sauce-json-reporter');
-const { Region, TestComposer } = require('@saucelabs/testcomposer');
+const { TestComposer } = require('@saucelabs/testcomposer');
 
 const { TestRuns: TestRunsAPI } = require('./api');
 const { CI } = require('./ci');
@@ -27,14 +27,14 @@ class JobReporter {
 
         const userAgent = `testcafe-reporter/${reporterVersion}`;
         this.testComposer = new TestComposer({
-            region: opts.region || Region.USWest1,
+            region: this.region,
             username: this.username,
             accessKey: this.accessKey,
             headers: {'User-Agent': userAgent }
         });
 
         this.testRunsAPI = new TestRunsAPI({
-            region: opts.region || Region.USWest1,
+            region: this.region,
             username: this.username,
             accessKey: this.accessKey,
             headers: {
