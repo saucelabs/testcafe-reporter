@@ -27,7 +27,7 @@ class JobReporter {
 
         const userAgent = `testcafe-reporter/${reporterVersion}`;
         this.testComposer = new TestComposer({
-            region: opts.region || this.region,
+            region: this.region,
             username: this.username,
             accessKey: this.accessKey,
             headers: {'User-Agent': userAgent }
