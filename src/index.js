@@ -21,7 +21,7 @@ module.exports = function () {
         startTimes:     new Map(),
 
         // TestCafe Hooks
-        reportTaskStart: async function(startTime, userAgents, testCount, testStructure, properties) {            
+        reportTaskStart: async function(startTime, userAgents, testCount, testStructure, properties) {
             this.sauceJsonReporter.reportTaskStart(startTime, userAgents, testCount);
 
             if (this.disableUpload) {
@@ -31,7 +31,7 @@ module.exports = function () {
             this.reporter = new JobReporter(this, properties.configuration.sauce);
             this.startTime = startTime;
             this.testCount = testCount;
-            this.taskStartConsole(userAgents);
+            this.taskStartConsole(startTime, userAgents, testCount);
         },
 
         reportFixtureStart: async function(name, specPath, meta) {
@@ -51,7 +51,7 @@ module.exports = function () {
             this.relSpecPath = path.relative(process.cwd(), this.specPath);
             this.specStartConsole(this.relSpecPath, this.sauceJsonReporter.fixtures.length);
 
-            this.fixtureStartConsole(name);
+            this.fixtureStartConsole(name, specPath, meta);
         },
 
         reportTestStart: async function(name, meta, testStartInfo) {
@@ -71,7 +71,7 @@ module.exports = function () {
                 return;
             }
 
-            this.testDoneConsole(name, testRunInfo);
+            this.testDoneConsole(name, testRunInfo, meta);
         },
 
         reportTaskDone: async function(endTime, passed, warnings, result) {
@@ -90,22 +90,22 @@ module.exports = function () {
         },
 
         // Extraneous funcs - Used by JobReporter
-        taskStartConsole (userAgents) {
-            this.newline()
+        taskStartConsole (startTime, userAgents, testCount) {
+            this.setIndent(this.indentWidth)
+                .newline()
                 .useWordWrap(true)
-                .write(this.chalk.bold('Running tests in:'))
+                .write(this.chalk.bold('Running tests in:'), startTime, userAgents, testCount)
                 .newline();
 
             userAgents.forEach(ua => {
-                this.setIndent(this.indentWidth)
-                    .write(`- ${this.chalk.cyan(ua)}`)
+                this
+                    .write(`- ${this.chalk.blue(ua)}`, startTime, userAgents, testCount)
                     .newline();
             });
-
-            this.newline();
         },
 
         async reportFixture(fixture) {
+            // TODO check if user account is set up for reporting; if not, log the skip
             this.setIndent(this.indentWidth * 3)
                 .newline()
                 .write(this.chalk.bold.underline('Sauce Labs Test Report'))
@@ -153,8 +153,8 @@ module.exports = function () {
                 .newline();
         },
 
-        fixtureStartConsole (name) {
-            this.setIndent(this.indentWidth * 3)
+        fixtureStartConsole (name, specPath, meta) {
+            this.setIndent(this.indentWidth)
                 .useWordWrap(true);
 
             if (this.afterErrorList) {
@@ -164,11 +164,11 @@ module.exports = function () {
                 this.newline();
             }
 
-            this.write(name)
+            this.write(name, specPath, meta)
                 .newline();
         },
 
-        testDoneConsole (name, testRunInfo) {
+        testDoneConsole (name, testRunInfo, meta) {
             const hasErr = !!testRunInfo.errs.length;
             let symbol = null;
             let nameStyle = null;
@@ -189,10 +189,10 @@ module.exports = function () {
                 symbol = this.chalk.green(this.symbols.ok);
                 nameStyle = this.chalk.grey;
             }
-            const styledName = nameStyle(`${name} (${testRunInfo.durationMs}ms)`);
-            let title = `${symbol} ${styledName}`;
+            // const styledName = nameStyle(`${name} (${testRunInfo.durationMs}ms)`);
+            let title = `${symbol} ${nameStyle(name)} (${testRunInfo.durationMs}ms)`;
 
-            this.setIndent(this.indentWidth * 4)
+            this.setIndent(this.indentWidth)
                 .useWordWrap(true);
 
             if (testRunInfo.unstable) {
@@ -203,10 +203,12 @@ module.exports = function () {
                 title += ` (screenshots: ${this.chalk.underline.grey(testRunInfo.screenshotPath)})`;
             }
 
-            this.write(title);
+            this.write(title, name, testRunInfo, meta);
+
+            this._renderReportData(testRunInfo.reportData, name, testRunInfo, meta);
 
             if (hasErr) {
-                this._renderErrors(testRunInfo.errs);
+                this._renderErrors(testRunInfo.errs, name, testRunInfo, meta);
             }
 
             this.afterErrorList = hasErr;
@@ -242,15 +244,50 @@ module.exports = function () {
             }
         },
 
-        _renderErrors (errs) {
-            this.setIndent(this.indentWidth * 4)
+
+        _renderReportData (reportData, browsers, name, testRunInfo, meta) {
+            if (!reportData)
+                return;
+
+            if (!Object.values(reportData).some(data => data.length))
+                return;
+
+            const renderBrowserName = browsers.length > 1;
+            const dataIndent        = browsers.length > 1 ? 3 : 2;
+
+            this.newline()
+                .setIndent(this.indentWidth)
+                .write('Report data:');
+
+            browsers.forEach(({ testRunId, prettyUserAgent }) => {
+                const browserReportData = reportData[testRunId];
+
+                if (!browserReportData)
+                    return;
+
+                if (renderBrowserName) {
+                    this.setIndent(this.indentWidth * 2)
+                        .newline()
+                        .write(prettyUserAgent, name, testRunInfo, meta);
+                }
+
+                browserReportData.forEach(data => {
+                    this.setIndent(this.indentWidth * dataIndent)
+                        .newline()
+                        .write(`- ${data}`, name, testRunInfo, meta);
+                });
+            });
+        },
+
+        _renderErrors (errs, name, testRunInfo, meta) {
+            this.setIndent(this.indentWidth * 3)
                 .newline();
 
             errs.forEach((err, idx) => {
                 const prefix = this.chalk.red(`${idx + 1}) `);
 
                 this.newline()
-                    .write(this.formatError(err, prefix))
+                    .write(this.formatError(err, prefix), name, testRunInfo, meta)
                     .newline()
                     .newline();
             });
