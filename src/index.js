@@ -149,7 +149,7 @@ module.exports = function () {
 
         specStartConsole(relSpecPath, index) {
             this.newline()
-                .setIndent(this.indentWidth * 2)
+                .setIndent(this.indentWidth)
                 .useWordWrap(true)
                 .write(`${index}) ${this.chalk.underline(relSpecPath)}`)
                 .newline();
