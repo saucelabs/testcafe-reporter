@@ -5,7 +5,7 @@ const {JobReporter} = require('./job-reporter');
 
 module.exports = function () {
     return {
-        noColors: true,
+        noColors: !!process.env.SAUCE_NO_COLORS || !!process.env.SAUCE_VM,
         sauceJsonReporter: SauceJsonReporter.newReporter(),
 
         sauceReportJsonPath: process.env.SAUCE_REPORT_JSON_PATH || './sauce-test-report.json',
@@ -15,7 +15,6 @@ module.exports = function () {
         indentWidth: 2,
         specPath: '',
         relSpecPath: '',
-        fixtureName: '',
         afterErrorList: false,
         startTime: null,
         startTimes: new Map(),
