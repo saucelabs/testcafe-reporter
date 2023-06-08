@@ -134,6 +134,14 @@ module.exports = function () {
                                 .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(job.url)}`)
                                 .newline();
 
+                            if (job.assets.length > 0) {
+                                this.write(`  ${this.chalk.bold('Assets:')}`)
+                                    .newline();
+                            }
+                            for (const asset of job.assets) {
+                                this.write(`    - ${this.chalk.blue.underline(asset)}`);
+                            }
+
                             await this.reporter.reportTestRun(fixture, browserTestRun, job.id);
                             resolve(job.id);
                         } catch (e) {

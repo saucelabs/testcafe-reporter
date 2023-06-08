@@ -8,6 +8,12 @@ const { TestComposer } = require('@saucelabs/testcomposer');
 const { TestRuns: TestRunsAPI } = require('./api');
 const { CI } = require('./ci');
 
+const assetsURLMap = new Map([
+    ['us-west-1', 'https://assets.saucelabs.com'],
+    ['eu-central-1', 'https://assets.eu-central-1.saucelabs.com'],
+    ['staging', 'https://assets.staging.saucelabs.net']
+]);
+
 class JobReporter {
     constructor (logger = console, opts = {}) {
         this.log = logger;
@@ -147,8 +153,12 @@ class JobReporter {
             browserVersion:   session.browserVersion,
             platformName:     session.platformName,
         });
+        job.assets = [];
+        const baseURL = assetsURLMap.get(this.region);
 
         const assets = session.assets.map((a) => {
+            job.assets.push(`${baseURL}/jobs/${job.id}/${a.name}`);
+
             return {
                 filename: a.name,
                 data: fs.createReadStream(a.localPath)
