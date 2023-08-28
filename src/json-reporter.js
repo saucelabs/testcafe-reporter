@@ -1,7 +1,7 @@
 const Stream = require('stream');
 const buildReporterPlugin = require('testcafe').embeddingUtils.buildReporterPlugin;
 const { TestRun, Status, Test, TestCode } = require('@saucelabs/sauce-json-reporter');
-const { renderers } = require('callsite-record');
+const { renderers } = require('@devexpress/callsite-record');
 const path = require('path');
 const process = require('process');
 

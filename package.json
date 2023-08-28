@@ -45,7 +45,7 @@
     "ts-jest": "^29.0.5"
   },
   "peerDependencies": {
-    "testcafe": ">=1.0.1"
+    "testcafe": ">=3.2.0"
   },
   "dependencies": {
     "@saucelabs/sauce-json-reporter": "2.0.0",
