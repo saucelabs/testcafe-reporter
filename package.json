@@ -30,6 +30,15 @@
     "plugin"
   ],
   "license": "MIT",
+  "peerDependencies": {
+    "testcafe": ">=3.2.0"
+  },
+  "dependencies": {
+    "@saucelabs/sauce-json-reporter": "3.0.3",
+    "@saucelabs/testcomposer": "1.2.1",
+    "axios": "^1.5.1",
+    "debug": "^4.3.4"
+  },
   "devDependencies": {
     "@tsconfig/node18": "2.0.1",
     "@types/debug": "^4.1.9",
@@ -43,14 +52,5 @@
     "testcafe": "^3.3.0",
     "typescript": "5.2.2",
     "ts-jest": "^29.1.1"
-  },
-  "peerDependencies": {
-    "testcafe": ">=3.2.0"
-  },
-  "dependencies": {
-    "@saucelabs/sauce-json-reporter": "3.0.3",
-    "@saucelabs/testcomposer": "1.2.1",
-    "axios": "^1.5.1",
-    "debug": "^4.3.4"
   }
 }
