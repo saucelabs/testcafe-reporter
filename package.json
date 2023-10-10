@@ -30,6 +30,9 @@
     "plugin"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=16.13.2"
+  },
   "peerDependencies": {
     "testcafe": ">=3.2.0"
   },
@@ -40,7 +43,7 @@
     "debug": "^4.3.4"
   },
   "devDependencies": {
-    "@tsconfig/node18": "2.0.1",
+    "@tsconfig/node20": "^20.1.2",
     "@types/debug": "^4.1.9",
     "@types/jest": "^29.5.5",
     "eslint": "^8.51.0",
