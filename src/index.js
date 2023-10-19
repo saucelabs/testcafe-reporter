@@ -1,326 +1,347 @@
 const path = require('path');
 const fs = require('fs');
-const {SauceJsonReporter} = require('./json-reporter');
-const {JobReporter} = require('./job-reporter');
+const { SauceJsonReporter } = require('./json-reporter');
+const { JobReporter } = require('./job-reporter');
 
 module.exports = function () {
-    return {
-        noColors: !!process.env.SAUCE_NO_COLORS || !!process.env.SAUCE_VM,
-        sauceJsonReporter: SauceJsonReporter.newReporter(),
+  return {
+    noColors: !!process.env.SAUCE_NO_COLORS || !!process.env.SAUCE_VM,
+    sauceJsonReporter: SauceJsonReporter.newReporter(),
 
-        sauceReportJsonPath: process.env.SAUCE_REPORT_JSON_PATH || './sauce-test-report.json',
-        disableUpload: process.env.SAUCE_DISABLE_UPLOAD !== undefined,
+    sauceReportJsonPath:
+      process.env.SAUCE_REPORT_JSON_PATH || './sauce-test-report.json',
+    disableUpload: process.env.SAUCE_DISABLE_UPLOAD !== undefined,
 
-        // JobReporter
-        indentWidth: 2,
-        specPath: '',
-        relSpecPath: '',
-        afterErrorList: false,
-        startTime: null,
-        startTimes: new Map(),
+    // JobReporter
+    indentWidth: 2,
+    specPath: '',
+    relSpecPath: '',
+    afterErrorList: false,
+    startTime: null,
+    startTimes: new Map(),
 
-        // TestCafe Hooks
-        reportTaskStart: async function (startTime, userAgents, testCount, testStructure, properties) {
-            this.sauceJsonReporter.reportTaskStart(startTime, userAgents, testCount);
+    // TestCafe Hooks
+    reportTaskStart: async function (
+      startTime,
+      userAgents,
+      testCount,
+      testStructure,
+      properties,
+    ) {
+      this.sauceJsonReporter.reportTaskStart(startTime, userAgents, testCount);
 
-            if (this.disableUpload) {
-                return;
-            }
+      if (this.disableUpload) {
+        return;
+      }
 
-            this.reporter = new JobReporter(this, properties.configuration.sauce);
-            this.startTime = startTime;
-            this.testCount = testCount;
-            this.taskStartConsole(startTime, userAgents, testCount);
-        },
+      this.reporter = new JobReporter(this, properties.configuration.sauce);
+      this.startTime = startTime;
+      this.testCount = testCount;
+      this.taskStartConsole(startTime, userAgents, testCount);
+    },
 
-        reportFixtureStart: async function (name, specPath, meta) {
-            this.sauceJsonReporter.reportFixtureStart(name, specPath, meta);
+    reportFixtureStart: async function (name, specPath, meta) {
+      this.sauceJsonReporter.reportFixtureStart(name, specPath, meta);
 
-            if (this.disableUpload) {
-                return;
-            }
+      if (this.disableUpload) {
+        return;
+      }
 
-            if (this.specPath && this.specPath !== specPath) {
-                // End of currently running spec
-                const completedFixture = this.sauceJsonReporter.fixtures.find((f) => f.path === path.relative(process.cwd(), this.specPath));
-                await this.reportFixture(completedFixture);
-            }
+      if (this.specPath && this.specPath !== specPath) {
+        // End of currently running spec
+        const completedFixture = this.sauceJsonReporter.fixtures.find(
+          (f) => f.path === path.relative(process.cwd(), this.specPath),
+        );
+        await this.reportFixture(completedFixture);
+      }
 
-            this.specPath = specPath;
-            this.relSpecPath = path.relative(process.cwd(), this.specPath);
-            this.specStartConsole(this.relSpecPath, this.sauceJsonReporter.fixtures.length);
+      this.specPath = specPath;
+      this.relSpecPath = path.relative(process.cwd(), this.specPath);
+      this.specStartConsole(
+        this.relSpecPath,
+        this.sauceJsonReporter.fixtures.length,
+      );
 
-            this.fixtureStartConsole(name, specPath, meta);
-        },
+      this.fixtureStartConsole(name, specPath, meta);
+    },
 
-        reportTestStart: async function (name, meta, testStartInfo) {
-            this.sauceJsonReporter.reportTestStart(name, meta, testStartInfo);
+    reportTestStart: async function (name, meta, testStartInfo) {
+      this.sauceJsonReporter.reportTestStart(name, meta, testStartInfo);
 
-            if (this.disableUpload) {
-                return;
-            }
+      if (this.disableUpload) {
+        return;
+      }
 
-            this.startTimes.set(testStartInfo.testId, new Date());
-        },
+      this.startTimes.set(testStartInfo.testId, new Date());
+    },
 
-        reportTestDone: async function (name, testRunInfo, meta) {
-            this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
+    reportTestDone: async function (name, testRunInfo, meta) {
+      this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
 
-            if (this.disableUpload) {
-                return;
-            }
+      if (this.disableUpload) {
+        return;
+      }
 
-            this.testDoneConsole(name, testRunInfo, meta);
-        },
+      this.testDoneConsole(name, testRunInfo, meta);
+    },
 
-        reportTaskDone: async function (endTime, passed, warnings, result) {
-            this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
-            const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
+    reportTaskDone: async function (endTime, passed, warnings, result) {
+      this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
+      const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
 
-            fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
+      fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
 
-            if (this.disableUpload) {
-                return;
-            }
+      if (this.disableUpload) {
+        return;
+      }
 
-            await this.reportFixture(this.sauceJsonReporter.currentFixture);
+      await this.reportFixture(this.sauceJsonReporter.currentFixture);
 
-            this.taskDoneConsole(endTime, passed, warnings);
-        },
+      this.taskDoneConsole(endTime, passed, warnings);
+    },
 
-        // Extraneous funcs - Used by JobReporter
-        taskStartConsole(startTime, userAgents, testCount) {
-            this.setIndent(this.indentWidth)
-                .newline()
-                .useWordWrap(true)
-                .write(this.chalk.bold('Running tests in:'), startTime, userAgents, testCount)
+    // Extraneous funcs - Used by JobReporter
+    taskStartConsole(startTime, userAgents, testCount) {
+      this.setIndent(this.indentWidth)
+        .newline()
+        .useWordWrap(true)
+        .write(
+          this.chalk.bold('Running tests in:'),
+          startTime,
+          userAgents,
+          testCount,
+        )
+        .newline();
+
+      userAgents.forEach((ua) => {
+        this.write(
+          `- ${this.chalk.blue(ua)}`,
+          startTime,
+          userAgents,
+          testCount,
+        ).newline();
+      });
+    },
+
+    async reportFixture(fixture) {
+      if (!this.reporter.isAccountSet()) {
+        return;
+      }
+
+      this.setIndent(this.indentWidth * 3)
+        .newline()
+        .write(this.chalk.bold.underline('Sauce Labs Test Report'))
+        .newline();
+
+      const reportTasks = [];
+      for (const [userAgent, browserTestRun] of fixture.browserTestRuns) {
+        const task = new Promise((resolve, reject) => {
+          (async () => {
+            const session = {
+              name: fixture.path,
+              startTime: fixture.startTime,
+              endTime: new Date(),
+              testRun: browserTestRun.testRun,
+              browserName: browserTestRun.browserName,
+              browserVersion: browserTestRun.browserVersion,
+              platformName: browserTestRun.platform,
+              assets: browserTestRun.assets,
+              userAgent: userAgent,
+            };
+            try {
+              const job = await this.reporter.reportSession(session);
+              this.setIndent(this.indentWidth * 4)
+                .write(
+                  `* ${browserTestRun.browser}: ${this.chalk.blue.underline(
+                    job.url,
+                  )}`,
+                )
                 .newline();
 
-            userAgents.forEach(ua => {
-                this
-                    .write(`- ${this.chalk.blue(ua)}`, startTime, userAgents, testCount)
-                    .newline();
-            });
-        },
+              if (job.assets.length > 0) {
+                this.write(`  ${this.chalk.bold('Assets:')}`).newline();
+              }
+              for (const asset of job.assets) {
+                this.write(`    - ${this.chalk.blue.underline(asset)}`);
+              }
 
-        async reportFixture(fixture) {
-            if (!this.reporter.isAccountSet()) {
-                return;
+              await this.reporter.reportTestRun(
+                fixture,
+                browserTestRun,
+                job.id,
+              );
+              resolve(job.id);
+            } catch (e) {
+              reject(e);
             }
+          })();
+        });
+        reportTasks.push(task);
+      }
+      await Promise.allSettled(reportTasks);
+      this.newline();
+    },
 
-            this.setIndent(this.indentWidth * 3)
-                .newline()
-                .write(this.chalk.bold.underline('Sauce Labs Test Report'))
-                .newline();
+    specStartConsole(relSpecPath, index) {
+      this.newline()
+        .setIndent(this.indentWidth)
+        .useWordWrap(true)
+        .write(`${index}) ${this.chalk.underline(relSpecPath)}`)
+        .newline();
+    },
 
-            const reportTasks = [];
-            for (const [userAgent, browserTestRun] of fixture.browserTestRuns) {
-                const task = new Promise((resolve, reject) => {
-                    (async () => {
-                        const session = {
-                            name: fixture.path,
-                            startTime: fixture.startTime,
-                            endTime: new Date(),
-                            testRun: browserTestRun.testRun,
-                            browserName: browserTestRun.browserName,
-                            browserVersion: browserTestRun.browserVersion,
-                            platformName: browserTestRun.platform,
-                            assets: browserTestRun.assets,
-                            userAgent: userAgent,
-                        };
-                        try {
-                            const job = await this.reporter.reportSession(session);
-                            this.setIndent(this.indentWidth * 4)
-                                .write(`* ${browserTestRun.browser}: ${this.chalk.blue.underline(job.url)}`)
-                                .newline();
+    fixtureStartConsole(name, specPath, meta) {
+      this.setIndent(this.indentWidth).useWordWrap(true);
 
-                            if (job.assets.length > 0) {
-                                this.write(`  ${this.chalk.bold('Assets:')}`)
-                                    .newline();
-                            }
-                            for (const asset of job.assets) {
-                                this.write(`    - ${this.chalk.blue.underline(asset)}`);
-                            }
+      if (this.afterErrorList) {
+        this.afterErrorList = false;
+      } else {
+        this.newline();
+      }
 
-                            await this.reporter.reportTestRun(fixture, browserTestRun, job.id);
-                            resolve(job.id);
-                        } catch (e) {
-                            reject(e);
-                        }
-                    })();
-                });
-                reportTasks.push(task);
-            }
-            await Promise.allSettled(reportTasks);
-            this.newline();
-        },
+      this.write(name, specPath, meta).newline();
+    },
 
-        specStartConsole(relSpecPath, index) {
-            this.newline()
-                .setIndent(this.indentWidth)
-                .useWordWrap(true)
-                .write(`${index}) ${this.chalk.underline(relSpecPath)}`)
-                .newline();
-        },
+    testDoneConsole(name, testRunInfo, meta) {
+      const hasErr = !!testRunInfo.errs.length;
+      let symbol = null;
+      let nameStyle = null;
 
-        fixtureStartConsole(name, specPath, meta) {
-            this.setIndent(this.indentWidth)
-                .useWordWrap(true);
+      if (testRunInfo.skipped) {
+        this.skipped++;
 
-            if (this.afterErrorList) {
-                this.afterErrorList = false;
-            } else {
-                this.newline();
-            }
+        symbol = this.chalk.cyan('-');
+        nameStyle = this.chalk.cyan;
+      } else if (hasErr) {
+        symbol = this.chalk.red.bold(this.symbols.err);
+        nameStyle = this.chalk.red.bold;
+      } else {
+        symbol = this.chalk.green(this.symbols.ok);
+        nameStyle = this.chalk.grey;
+      }
+      let title = `${symbol} ${nameStyle(name)} (${testRunInfo.durationMs}ms)`;
 
-            this.write(name, specPath, meta)
-                .newline();
-        },
+      this.setIndent(this.indentWidth).useWordWrap(true);
 
-        testDoneConsole(name, testRunInfo, meta) {
-            const hasErr = !!testRunInfo.errs.length;
-            let symbol = null;
-            let nameStyle = null;
+      if (testRunInfo.unstable) {
+        title += this.chalk.yellow(' (unstable)');
+      }
 
-            if (testRunInfo.skipped) {
-                this.skipped++;
+      if (testRunInfo.screenshotPath) {
+        title += ` (screenshots: ${this.chalk.underline.grey(
+          testRunInfo.screenshotPath,
+        )})`;
+      }
 
-                symbol = this.chalk.cyan('-');
-                nameStyle = this.chalk.cyan;
-            } else if (hasErr) {
-                symbol = this.chalk.red.bold(this.symbols.err);
-                nameStyle = this.chalk.red.bold;
-            } else {
-                symbol = this.chalk.green(this.symbols.ok);
-                nameStyle = this.chalk.grey;
-            }
-            let title = `${symbol} ${nameStyle(name)} (${testRunInfo.durationMs}ms)`;
+      this.write(title, name, testRunInfo, meta);
 
-            this.setIndent(this.indentWidth)
-                .useWordWrap(true);
+      this._renderReportData(testRunInfo.reportData, name, testRunInfo, meta);
 
-            if (testRunInfo.unstable) {
-                title += this.chalk.yellow(' (unstable)');
-            }
+      if (hasErr) {
+        this._renderErrors(testRunInfo.errs, name, testRunInfo, meta);
+      }
 
-            if (testRunInfo.screenshotPath) {
-                title += ` (screenshots: ${this.chalk.underline.grey(testRunInfo.screenshotPath)})`;
-            }
+      this.afterErrorList = hasErr;
 
-            this.write(title, name, testRunInfo, meta);
+      this.newline();
+    },
 
-            this._renderReportData(testRunInfo.reportData, name, testRunInfo, meta);
+    taskDoneConsole(endTime, passed, warnings) {
+      const durationMs = endTime - this.startTime;
+      const durationStr = this.moment
+        .duration(durationMs)
+        .format('h[h] mm[m] ss[s]');
+      let footer =
+        passed === this.testCount
+          ? this.chalk.bold.green(`${this.testCount} passed`)
+          : this.chalk.bold.red(
+              `${this.testCount - passed}/${this.testCount} failed`,
+            );
 
-            if (hasErr) {
-                this._renderErrors(testRunInfo.errs, name, testRunInfo, meta);
-            }
+      footer += this.chalk.grey(` (${durationStr})`);
 
-            this.afterErrorList = hasErr;
+      if (!this.afterErrorList) {
+        this.newline();
+      }
 
-            this.newline();
-        },
+      this.setIndent(this.indentWidth)
+        .useWordWrap(true)
+        .write(footer)
+        .newline();
 
-        taskDoneConsole(endTime, passed, warnings) {
-            const durationMs = endTime - this.startTime;
-            const durationStr = this.moment.duration(durationMs).format('h[h] mm[m] ss[s]');
-            let footer = passed === this.testCount ?
-                this.chalk.bold.green(`${this.testCount} passed`) :
-                this.chalk.bold.red(`${this.testCount - passed}/${this.testCount} failed`);
+      if (this.skipped > 0) {
+        this.write(this.chalk.cyan(`${this.skipped} skipped`)).newline();
+      }
 
-            footer += this.chalk.grey(` (${durationStr})`);
+      if (warnings.length) {
+        this._renderWarnings(warnings);
+      }
+    },
 
-            if (!this.afterErrorList) {
-                this.newline();
-            }
+    _renderReportData(reportData, browsers, name, testRunInfo, meta) {
+      if (!reportData) return;
 
-            this.setIndent(this.indentWidth)
-                .useWordWrap(true)
-                .write(footer)
-                .newline();
+      if (!Object.values(reportData).some((data) => data.length)) return;
 
-            if (this.skipped > 0) {
-                this.write(this.chalk.cyan(`${this.skipped} skipped`))
-                    .newline();
-            }
+      const renderBrowserName = browsers.length > 1;
+      const dataIndent = browsers.length > 1 ? 3 : 2;
 
-            if (warnings.length) {
-                this._renderWarnings(warnings);
-            }
-        },
+      this.newline().setIndent(this.indentWidth).write('Report data:');
 
+      browsers.forEach(({ testRunId, prettyUserAgent }) => {
+        const browserReportData = reportData[testRunId];
 
-        _renderReportData(reportData, browsers, name, testRunInfo, meta) {
-            if (!reportData)
-                return;
+        if (!browserReportData) return;
 
-            if (!Object.values(reportData).some(data => data.length))
-                return;
+        if (renderBrowserName) {
+          this.setIndent(this.indentWidth * 2)
+            .newline()
+            .write(prettyUserAgent, name, testRunInfo, meta);
+        }
 
-            const renderBrowserName = browsers.length > 1;
-            const dataIndent = browsers.length > 1 ? 3 : 2;
+        browserReportData.forEach((data) => {
+          this.setIndent(this.indentWidth * dataIndent)
+            .newline()
+            .write(`- ${data}`, name, testRunInfo, meta);
+        });
+      });
+    },
 
-            this.newline()
-                .setIndent(this.indentWidth)
-                .write('Report data:');
+    _renderErrors(errs, name, testRunInfo, meta) {
+      this.setIndent(this.indentWidth * 3).newline();
 
-            browsers.forEach(({testRunId, prettyUserAgent}) => {
-                const browserReportData = reportData[testRunId];
+      errs.forEach((err, idx) => {
+        const prefix = this.chalk.red(`${idx + 1}) `);
 
-                if (!browserReportData)
-                    return;
+        this.newline()
+          .write(this.formatError(err, prefix), name, testRunInfo, meta)
+          .newline()
+          .newline();
+      });
+    },
 
-                if (renderBrowserName) {
-                    this.setIndent(this.indentWidth * 2)
-                        .newline()
-                        .write(prettyUserAgent, name, testRunInfo, meta);
-                }
+    _renderWarnings(warnings) {
+      this.newline()
+        .setIndent(this.indentWidth * 4)
+        .write(this.chalk.bold.yellow(`Warnings (${warnings.length}):`))
+        .newline();
 
-                browserReportData.forEach(data => {
-                    this.setIndent(this.indentWidth * dataIndent)
-                        .newline()
-                        .write(`- ${data}`, name, testRunInfo, meta);
-                });
-            });
-        },
+      warnings.forEach((msg) => {
+        this.setIndent(this.indentWidth * 4)
+          .write(this.chalk.bold.yellow('--'))
+          .newline()
+          .setIndent(this.indentWidth * 5)
+          .write(msg)
+          .newline();
+      });
+    },
 
-        _renderErrors(errs, name, testRunInfo, meta) {
-            this.setIndent(this.indentWidth * 3)
-                .newline();
+    log(msg) {
+      this.write(msg).newline();
+    },
 
-            errs.forEach((err, idx) => {
-                const prefix = this.chalk.red(`${idx + 1}) `);
-
-                this.newline()
-                    .write(this.formatError(err, prefix), name, testRunInfo, meta)
-                    .newline()
-                    .newline();
-            });
-        },
-
-        _renderWarnings(warnings) {
-            this.newline()
-                .setIndent(this.indentWidth * 4)
-                .write(this.chalk.bold.yellow(`Warnings (${warnings.length}):`))
-                .newline();
-
-            warnings.forEach(msg => {
-                this.setIndent(this.indentWidth * 4)
-                    .write(this.chalk.bold.yellow('--'))
-                    .newline()
-                    .setIndent(this.indentWidth * 5)
-                    .write(msg)
-                    .newline();
-            });
-        },
-
-        log(msg) {
-            this.write(msg).newline();
-        },
-
-        error(msg) {
-            this.newline()
-                .write(this.chalk.red(msg))
-                .newline();
-        },
-    };
+    error(msg) {
+      this.newline().write(this.chalk.red(msg)).newline();
+    },
+  };
 };
