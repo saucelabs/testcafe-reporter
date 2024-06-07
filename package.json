@@ -36,7 +36,7 @@
     "node": ">=16.13.2"
   },
   "peerDependencies": {
-    "testcafe": "^0.0.21"
+    "testcafe": ">=3.2.0"
   },
   "dependencies": {
     "@saucelabs/sauce-json-reporter": "4.1.0",
