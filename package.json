@@ -1,6 +1,6 @@
 {
   "name": "testcafe-reporter-saucelabs",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Sauce Labs TestCafe reporter plugin.",
   "repository": "https://github.com/saucelabs/testcafe-reporter",
   "author": {
