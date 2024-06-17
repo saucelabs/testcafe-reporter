@@ -39,6 +39,7 @@
     "testcafe": ">=3.2.0"
   },
   "dependencies": {
+    "@devexpress/callsite-record": "4.1.7",
     "@saucelabs/sauce-json-reporter": "4.1.0",
     "@saucelabs/testcomposer": "3.0.0",
     "axios": "^1.7.2",
