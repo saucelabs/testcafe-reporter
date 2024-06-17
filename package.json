@@ -15,7 +15,7 @@
   "scripts": {
     "build": "rm -rf lib && tsc",
     "watch": "tsc -w",
-    "lint": "prettier --check '**/*.{js,ts,mjs,cjs}' && eslint src/",
+    "lint": "prettier --check '**/*.{js,ts,mjs,cjs}' && eslint src/ tests/",
     "fmt": "prettier --write '**/*.{js,ts,mjs,cjs}'",
     "prepare": "husky",
     "test": "jest",

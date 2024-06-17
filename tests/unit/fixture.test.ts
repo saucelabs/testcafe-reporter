@@ -1,5 +1,5 @@
 import { Status, Test } from '@saucelabs/sauce-json-reporter';
-import { BrowserTestRun, Fixture } from '../../src/fixture';
+import { Assets, BrowserTestRun, Fixture } from '../../src/fixture';
 
 describe('BrowserTestRun', () => {
   [
@@ -34,8 +34,8 @@ describe('Fixture', () => {
     const fixturePath = 'path/to/some/test.spec.js';
     const fixtureMeta = {};
     const userAgent = 'Chrome 99 / macOS 10';
-    const screenshotAssets: any[] = [];
-    const videoAssets: any[] = [];
+    const screenshotAssets: Assets = [];
+    const videoAssets: Assets = [];
     const test = new Test(
       'test',
       Status.Passed,
