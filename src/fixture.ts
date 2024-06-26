@@ -24,11 +24,11 @@ export class BrowserTestRun {
     // NOTE: example userAgents:
     // * Chrome 126.0.0.0 / Sonoma 14
     // * Chrome 126.0.0.0 / Windows 10 (https://app.saucelabs.com/tests/000aa4ffc86d40bdbeebfcf165dab402)
-    const matches = userAgent.match(/^([\w\s.]+)\/([\w\s.]+)/);
+    const matches = userAgent.match(/^([\w .]+)(?:\/([\w .]+))?/);
 
-    if (matches && matches.length >= 2) {
-      this.#browser = matches[1].trim();
-      this.platform = matches[2].trim();
+    if (matches) {
+      this.#browser = matches[1]?.trim() ?? '';
+      this.platform = matches[2]?.trim() ?? '';
     } else {
       this.#browser = '';
       this.platform = '';
