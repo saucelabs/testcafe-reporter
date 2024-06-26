@@ -1,9 +1,17 @@
+import { TestRun } from '@saucelabs/sauce-json-reporter';
+
 const path = require('path');
 const fs = require('fs');
+const stream = require('node:stream');
+
 const { SauceJsonReporter } = require('./json-reporter');
 const { JobReporter } = require('./job-reporter');
 
-module.exports = function () {
+/**
+ * @typedef {import("./fixture").Fixture} Fixture
+ */
+
+module.exports = function() {
   return {
     noColors: !!process.env.SAUCE_NO_COLORS || !!process.env.SAUCE_VM,
     sauceJsonReporter: SauceJsonReporter.newReporter(),
@@ -85,11 +93,35 @@ module.exports = function () {
       this.testDoneConsole(name, testRunInfo, meta);
     },
 
-    reportTaskDone: async function (endTime, passed, warnings, result) {
+    reportTaskDone: async function(endTime, passed, warnings, result) {
       this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
       const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
 
       fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
+
+      const remoteTestRuns = this.sauceJsonReporter.remoteTestRuns();
+      const tasks = [];
+      for (const [jobId, runs] of remoteTestRuns) {
+        const p = async () => {
+          const merged = new TestRun();
+          runs.forEach((run) => {
+            for (const suite of run.suites) {
+              suite.metadata = run.metadata;
+              merged.addSuite(suite);
+            }
+          });
+          merged.computeStatus();
+
+          const reportReadable = new stream.Readable();
+          reportReadable.push(merged.stringify());
+          reportReadable.push(null);
+
+          await this.reporter.attachTestRun(jobId, merged);
+        };
+        tasks.push(p());
+      }
+
+      await Promise.allSettled(tasks);
 
       if (this.disableUpload) {
         return;
@@ -123,8 +155,16 @@ module.exports = function () {
       });
     },
 
+    /**
+     * @param {Fixture} fixture
+     */
     async reportFixture(fixture) {
       if (!this.reporter.isAccountSet()) {
+        return;
+      }
+
+      const browserTestRuns = fixture.localBrowserTestRuns;
+      if (browserTestRuns.length === 0) {
         return;
       }
 
@@ -134,7 +174,7 @@ module.exports = function () {
         .newline();
 
       const reportTasks = [];
-      for (const [userAgent, browserTestRun] of fixture.browserTestRuns) {
+      for (const browserTestRun of browserTestRuns) {
         const task = new Promise((resolve, reject) => {
           (async () => {
             const session = {
@@ -146,7 +186,7 @@ module.exports = function () {
               browserVersion: browserTestRun.browserVersion,
               platformName: browserTestRun.platform,
               assets: browserTestRun.assets,
-              userAgent: userAgent,
+              userAgent: browserTestRun.userAgent,
             };
             try {
               const job = await this.reporter.reportSession(session);
@@ -170,7 +210,7 @@ module.exports = function () {
                 browserTestRun,
                 job.id,
               );
-              resolve(job.id);
+              resolve();
             } catch (e) {
               reject(e);
             }

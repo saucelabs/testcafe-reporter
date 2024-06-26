@@ -21,10 +21,35 @@ export class BrowserTestRun {
     (this.testRun.metadata as { userAgent: string })['userAgent'] = userAgent;
     this.assets = [];
 
-    const [browser, platform] = userAgent.split('/').map((ua) => ua.trim());
+    // NOTE: example userAgents:
+    // * Chrome 126.0.0.0 / Sonoma 14
+    // * Chrome 126.0.0.0 / Windows 10 (https://app.saucelabs.com/tests/000aa4ffc86d40bdbeebfcf165dab402)
+    const matches = userAgent.match(/^([\w\s.]+)\/([\w\s.]+)/);
 
-    this.#browser = browser;
-    this.platform = platform;
+    if (matches && matches.length >= 2) {
+      this.#browser = matches[1].trim();
+      this.platform = matches[2].trim();
+    } else {
+      this.#browser = '';
+      this.platform = '';
+    }
+  }
+
+  /**
+   * Returns the job id for the remotely executed test run.
+   *
+   * Job link is provided in the user agent by the saucelabs browser provider.
+   */
+  get jobId() {
+    // NOTE: example match:
+    // * Chrome 126.0.0.0 / Windows 10 (https://app.saucelabs.com/tests/000aa4ffc86d40bdbeebfcf165dab402)
+    const matches = this.userAgent.match(
+      /https:\/\/.*saucelabs\.com\/tests\/(\w+)/,
+    );
+    if (!matches || matches.length < 2) {
+      return null;
+    }
+    return matches[1];
   }
 
   get browserName() {
@@ -101,5 +126,17 @@ export class Fixture {
 
   collectTestRuns() {
     return [...this.browserTestRuns.values()].map((bc) => bc.testRun);
+  }
+
+  get localBrowserTestRuns() {
+    return [...this.browserTestRuns.values()].filter(
+      (run) => run.jobId === null,
+    );
+  }
+
+  get remoteBrowserTestRuns() {
+    return [...this.browserTestRuns.values()].filter(
+      (run) => run.jobId !== null,
+    );
   }
 }

@@ -182,6 +182,25 @@ function reporterFactory() {
       }, mergedTestRun);
     },
 
+    remoteTestRuns() {
+      const remoteBrowserTestRuns = this.fixtures.flatMap(
+        (f) => f.remoteBrowserTestRuns,
+      );
+
+      /**
+       * @type Map<string, TestRun[]>
+       */
+      const remoteRunsById = new Map();
+      remoteBrowserTestRuns.forEach((run) => {
+        if (!remoteRunsById.has(run.jobId)) {
+          remoteRunsById.set(run.jobId, []);
+        }
+        remoteRunsById.get(run.jobId).push(run.testRun);
+      });
+
+      return remoteRunsById;
+    },
+
     /**
      * @param {string} assetPath
      * @param {string} testName
