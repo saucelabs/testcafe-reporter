@@ -11,7 +11,7 @@ const { JobReporter } = require('./job-reporter');
  * @typedef {import("./fixture").Fixture} Fixture
  */
 
-module.exports = function() {
+module.exports = function () {
   return {
     noColors: !!process.env.SAUCE_NO_COLORS || !!process.env.SAUCE_VM,
     sauceJsonReporter: SauceJsonReporter.newReporter(),
@@ -93,7 +93,7 @@ module.exports = function() {
       this.testDoneConsole(name, testRunInfo, meta);
     },
 
-    reportTaskDone: async function(endTime, passed, warnings, result) {
+    reportTaskDone: async function (endTime, passed, warnings, result) {
       this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
       const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
 
