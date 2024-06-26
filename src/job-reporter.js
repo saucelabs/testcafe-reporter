@@ -166,36 +166,6 @@ class JobReporter {
     }
   }
 
-  async attachToSession(id, session) {
-    const assets = session.assets.map((a) => {
-      return {
-        filename: a.name,
-        data: fs.createReadStream(a.localPath),
-      };
-    });
-
-    const reportReadable = new stream.Readable();
-    reportReadable.push(session.testRun.stringify());
-    reportReadable.push(null);
-    assets.push({
-      filename: 'sauce-test-report.json',
-      data: reportReadable,
-    });
-
-    assets.push(this.createConsoleLog(session.testRun, session.userAgent));
-
-    await this.testComposer.uploadAssets(id, assets).then(
-      (resp) => {
-        if (resp.errors) {
-          for (const err of resp.errors) {
-            console.error('Failed to upload asset:', err);
-          }
-        }
-      },
-      (e) => console.error('Failed to upload assets:', e.message),
-    );
-  }
-
   async reportSession(session) {
     if (!this.isAccountSet()) {
       return;
