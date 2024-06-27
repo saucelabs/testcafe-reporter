@@ -7,6 +7,11 @@ describe('BrowserTestRun', () => {
     ['Firefox 97 / macOS 10.15.7', 'Firefox', '97'],
     ['Firefox 97', 'Firefox', '97'],
     ['Firefox', 'Firefox', 'unknown'],
+    [
+      'Chrome 126.0.0.0 / Windows 10 (https://app.saucelabs.com/tests/000aa4ffc86d40bdbeebfcf165dab402)',
+      'Chrome',
+      '126.0.0.0',
+    ],
   ].forEach(([userAgent, expectedBrowserName, expectedBrowserVersion]) => {
     test(`can parse browser from userAgent (${userAgent})`, async () => {
       const sut = new BrowserTestRun(userAgent);
@@ -19,11 +24,32 @@ describe('BrowserTestRun', () => {
   [
     ['Chrome 97.0.4692.71 / macOS 10.15.7', 'macOS 10.15.7'],
     ['Firefox 97 / macOS', 'macOS'],
+    [
+      'Chrome 126.0.0.0 / Windows 10 (https://app.saucelabs.com/tests/000aa4ffc86d40bdbeebfcf165dab402)',
+      'Windows 10',
+    ],
   ].forEach(([userAgent, expectedPlatform]) => {
     test(`can parse platform from userAgent (${userAgent})`, async () => {
       const sut = new BrowserTestRun(userAgent);
 
       expect(sut.platform).toBe(expectedPlatform);
+    });
+  });
+
+  [
+    [
+      'Chrome 126.0.0.0 / Windows 10 (https://app.saucelabs.com/tests/000aa4ffc86d40bdbeebfcf165dab402)',
+      '000aa4ffc86d40bdbeebfcf165dab402',
+    ],
+    [
+      'Chrome 126.0.0.0 / Windows 10 (https://app.eu-central-1.saucelabs.com/tests/000aa4ffc86d40bdbeebfcf165dab402)',
+      '000aa4ffc86d40bdbeebfcf165dab402',
+    ],
+  ].forEach(([userAgent, expectedJobId]) => {
+    test(`can parse jobId from userAgent (${userAgent})`, async () => {
+      const sut = new BrowserTestRun(userAgent);
+
+      expect(sut.jobId).toBe(expectedJobId);
     });
   });
 });

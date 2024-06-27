@@ -143,6 +143,29 @@ class JobReporter {
     return tests;
   }
 
+  async attachTestRun(jobId, testRun) {
+    const reportReadable = new stream.Readable();
+    reportReadable.push(testRun.stringify());
+    reportReadable.push(null);
+
+    try {
+      const resp = await this.testComposer.uploadAssets(jobId, [
+        {
+          filename: 'sauce-test-report.json',
+          data: reportReadable,
+        },
+      ]);
+
+      if (resp.errors) {
+        for (const err of resp.errors) {
+          console.error('Failed to upload asset:', err);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to upload test result:', e.message);
+    }
+  }
+
   async reportSession(session) {
     if (!this.isAccountSet()) {
       return;
