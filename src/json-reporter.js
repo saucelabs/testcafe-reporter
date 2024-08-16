@@ -162,7 +162,7 @@ function reporterFactory() {
 
     collectTestRuns() {
       const testRuns = this.fixtures.flatMap((f) => {
-        return f.collectTestRuns();
+        return f.testRuns;
       });
 
       return testRuns;

@@ -73,6 +73,6 @@ describe('Fixture', () => {
 
     sut.addTestWithAssets(userAgent, test, screenshotAssets, videoAssets);
 
-    expect(sut.collectTestRuns()).toMatchSnapshot();
+    expect(sut.testRuns).toMatchSnapshot();
   });
 });
