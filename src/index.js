@@ -103,6 +103,12 @@ module.exports = function () {
       for (const [jobId, runs] of remoteTestRuns) {
         const p = async () => {
           const merged = new TestRun();
+
+          // The user agent is the same for all runs of a given job.
+          merged.metadata['userAgent'] = runs.find(
+            (run) => run.metadata['userAgent'],
+          )?.metadata['userAgent'];
+
           runs.forEach((run) => {
             for (const suite of run.suites) {
               suite.metadata = run.metadata;

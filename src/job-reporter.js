@@ -143,6 +143,13 @@ class JobReporter {
     return tests;
   }
 
+  /**
+   * Attaches a test run to an existing Sauce Labs job.
+   *
+   * @param jobId {string}
+   * @param testRun {import('@saucelabs/sauce-json-reporter').TestRun}
+   * @returns {Promise<void>}
+   */
   async attachTestRun(jobId, testRun) {
     const reportReadable = new stream.Readable();
     reportReadable.push(testRun.stringify());
@@ -154,6 +161,7 @@ class JobReporter {
           filename: 'sauce-test-report.json',
           data: reportReadable,
         },
+        this.createConsoleLog(testRun, testRun.metadata['userAgent']),
       ]);
 
       if (resp.errors) {
