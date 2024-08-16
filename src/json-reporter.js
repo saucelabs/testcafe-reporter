@@ -26,17 +26,17 @@ function reporterFactory() {
     fixtures: [],
     /**
      * The currently executing test fixture
-     * @type Fixture | null
+     * @type {Fixture | null}
      */
     currentFixture: null,
     /**
      * The start time of the entire test run
-     * @type Date | null
+     * @type {Date | null}
      */
     startTime: null,
     /**
      * The end time of the entire test run
-     * @type Date | null
+     * @type {Date | null}
      */
     endTime: null,
     /**
@@ -47,7 +47,7 @@ function reporterFactory() {
     /**
      * The start time of a video recording started externally. We use this value to offset a
      * test's start time to its location in the video.
-     * @type number | null
+     * @type {number | null}
      */
     videoStartTime: null,
 
