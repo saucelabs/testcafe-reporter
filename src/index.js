@@ -94,13 +94,14 @@ module.exports = function () {
 
     reportTaskDone: async function (endTime, passed, warnings, result) {
       this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
-      const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
+      const mergedTestRun = this.sauceJsonReporter.getMergedTestRun();
 
       fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
 
-      const remoteTestRuns = this.sauceJsonReporter.remoteTestRuns();
+      const browserTestRunsByJobId =
+        this.sauceJsonReporter.getRemoteBrowserTestRunsByJobId();
       const tasks = [];
-      for (const [jobId, runs] of remoteTestRuns) {
+      for (const [jobId, runs] of browserTestRunsByJobId) {
         const p = async () => {
           const merged = new TestRun();
 

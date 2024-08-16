@@ -166,7 +166,7 @@ function reporterFactory() {
       });
     },
 
-    mergeTestRuns() {
+    getMergedTestRun() {
       const mergedTestRun = new TestRun();
       const testRuns = this.getTestRuns();
 
@@ -180,7 +180,7 @@ function reporterFactory() {
       }, mergedTestRun);
     },
 
-    remoteTestRuns() {
+    getRemoteBrowserTestRunsByJobId() {
       const remoteBrowserTestRuns = this.fixtures.flatMap(
         (f) => f.remoteBrowserTestRuns,
       );
