@@ -124,7 +124,7 @@ export class Fixture {
     tr.addAssets([...screenshotAssets, ...videoAssets]);
   }
 
-  collectTestRuns() {
+  get testRuns() {
     return [...this.browserTestRuns.values()].map((bc) => bc.testRun);
   }
 

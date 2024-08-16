@@ -2,7 +2,6 @@ import { TestRun } from '@saucelabs/sauce-json-reporter';
 
 const path = require('path');
 const fs = require('fs');
-const stream = require('node:stream');
 
 const { SauceJsonReporter } = require('./json-reporter');
 const { JobReporter } = require('./job-reporter');
@@ -95,15 +94,22 @@ module.exports = function () {
 
     reportTaskDone: async function (endTime, passed, warnings, result) {
       this.sauceJsonReporter.reportTaskDone(endTime, passed, warnings, result);
-      const mergedTestRun = this.sauceJsonReporter.mergeTestRuns();
+      const mergedTestRun = this.sauceJsonReporter.getMergedTestRun();
 
       fs.writeFileSync(this.sauceReportJsonPath, mergedTestRun.stringify());
 
-      const remoteTestRuns = this.sauceJsonReporter.remoteTestRuns();
+      const browserTestRunsByJobId =
+        this.sauceJsonReporter.getRemoteBrowserTestRunsByJobId();
       const tasks = [];
-      for (const [jobId, runs] of remoteTestRuns) {
+      for (const [jobId, runs] of browserTestRunsByJobId) {
         const p = async () => {
           const merged = new TestRun();
+
+          // The user agent is the same for all runs of a given job.
+          merged.metadata['userAgent'] = runs.find(
+            (run) => run.metadata['userAgent'],
+          )?.metadata['userAgent'];
+
           runs.forEach((run) => {
             for (const suite of run.suites) {
               suite.metadata = run.metadata;
@@ -111,10 +117,6 @@ module.exports = function () {
             }
           });
           merged.computeStatus();
-
-          const reportReadable = new stream.Readable();
-          reportReadable.push(merged.stringify());
-          reportReadable.push(null);
 
           await this.reporter.attachTestRun(jobId, merged);
         };

@@ -26,28 +26,28 @@ function reporterFactory() {
     fixtures: [],
     /**
      * The currently executing test fixture
-     * @type Fixture | null
+     * @type {Fixture | null}
      */
     currentFixture: null,
     /**
      * The start time of the entire test run
-     * @type Date | null
+     * @type {Date | null}
      */
     startTime: null,
     /**
      * The end time of the entire test run
-     * @type Date | null
+     * @type {Date | null}
      */
     endTime: null,
     /**
      * A map of testIds to their startTimes
-     * @type Map<string, Date>
+     * @type {Map<string, Date>}
      */
     startTimes: new Map(),
     /**
      * The start time of a video recording started externally. We use this value to offset a
      * test's start time to its location in the video.
-     * @type number | null
+     * @type {number | null}
      */
     videoStartTime: null,
 
@@ -160,17 +160,15 @@ function reporterFactory() {
       return Status.Failed;
     },
 
-    collectTestRuns() {
-      const testRuns = this.fixtures.flatMap((f) => {
-        return f.collectTestRuns();
+    getTestRuns() {
+      return this.fixtures.flatMap((f) => {
+        return f.testRuns;
       });
-
-      return testRuns;
     },
 
-    mergeTestRuns() {
+    getMergedTestRun() {
       const mergedTestRun = new TestRun();
-      const testRuns = this.collectTestRuns();
+      const testRuns = this.getTestRuns();
 
       return testRuns.reduce((collection, curr) => {
         for (const s of curr.suites) {
@@ -182,13 +180,13 @@ function reporterFactory() {
       }, mergedTestRun);
     },
 
-    remoteTestRuns() {
+    getRemoteBrowserTestRunsByJobId() {
       const remoteBrowserTestRuns = this.fixtures.flatMap(
         (f) => f.remoteBrowserTestRuns,
       );
 
       /**
-       * @type Map<string, TestRun[]>
+       * @type {Map<string, TestRun[]>}
        */
       const remoteRunsById = new Map();
       remoteBrowserTestRuns.forEach((run) => {
