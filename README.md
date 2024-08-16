@@ -10,8 +10,6 @@ If you are already using the [Sauce Labs Browser Provider](https://github.com/De
 npm install testcafe-reporter-saucelabs
 ```
 
-**Requirement**: Node.js 22.
-
 ## Configuration
 
 ### Sauce Labs Credentials
