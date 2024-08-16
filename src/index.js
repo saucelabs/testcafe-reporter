@@ -2,7 +2,6 @@ import { TestRun } from '@saucelabs/sauce-json-reporter';
 
 const path = require('path');
 const fs = require('fs');
-const stream = require('node:stream');
 
 const { SauceJsonReporter } = require('./json-reporter');
 const { JobReporter } = require('./job-reporter');
@@ -111,10 +110,6 @@ module.exports = function () {
             }
           });
           merged.computeStatus();
-
-          const reportReadable = new stream.Readable();
-          reportReadable.push(merged.stringify());
-          reportReadable.push(null);
 
           await this.reporter.attachTestRun(jobId, merged);
         };
