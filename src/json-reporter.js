@@ -41,7 +41,7 @@ function reporterFactory() {
     endTime: null,
     /**
      * A map of testIds to their startTimes
-     * @type Map<string, Date>
+     * @type {Map<string, Date>}
      */
     startTimes: new Map(),
     /**
@@ -188,7 +188,7 @@ function reporterFactory() {
       );
 
       /**
-       * @type Map<string, TestRun[]>
+       * @type {Map<string, TestRun[]>}
        */
       const remoteRunsById = new Map();
       remoteBrowserTestRuns.forEach((run) => {
