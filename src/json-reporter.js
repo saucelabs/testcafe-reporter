@@ -160,17 +160,15 @@ function reporterFactory() {
       return Status.Failed;
     },
 
-    collectTestRuns() {
-      const testRuns = this.fixtures.flatMap((f) => {
+    getTestRuns() {
+      return this.fixtures.flatMap((f) => {
         return f.testRuns;
       });
-
-      return testRuns;
     },
 
     mergeTestRuns() {
       const mergedTestRun = new TestRun();
-      const testRuns = this.collectTestRuns();
+      const testRuns = this.getTestRuns();
 
       return testRuns.reduce((collection, curr) => {
         for (const s of curr.suites) {
