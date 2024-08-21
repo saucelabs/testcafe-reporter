@@ -2,7 +2,9 @@
 
 This is the **Sauce Labs** reporter plugin for [TestCafe](http://devexpress.github.io/testcafe).
 
-If you are already using the [Sauce Labs Browser Provider](https://github.com/DevExpress/testcafe-browser-provider-saucelabs) for running tests against Sauce Labs, please refrain from installing this reporter, as it will create duplicate reports.
+Tip: You can also use this reporter together with the
+[Sauce Labs Browser Provider](https://github.com/saucelabs/testcafe-provider)
+for running tests against remote browsers from Sauce Labs!
 
 ## Installation
 
