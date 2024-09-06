@@ -1,4 +1,4 @@
-import { TestRun } from '@saucelabs/sauce-json-reporter';
+import { TestRun, Status } from '@saucelabs/sauce-json-reporter';
 
 const path = require('path');
 const fs = require('fs');
@@ -116,9 +116,10 @@ module.exports = function () {
               merged.addSuite(suite);
             }
           });
-          merged.computeStatus();
+          const status = merged.computeStatus();
 
           await this.reporter.attachTestRun(jobId, merged);
+          await this.reporter.updateJobStatus(jobId, status === Status.Passed);
         };
         tasks.push(p());
       }

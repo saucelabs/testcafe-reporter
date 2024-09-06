@@ -5,7 +5,7 @@ const stream = require('stream');
 const { Status, Test } = require('@saucelabs/sauce-json-reporter');
 const { TestComposer } = require('@saucelabs/testcomposer');
 
-const { TestRuns: TestRunsAPI } = require('./api');
+const { TestRuns: TestRunsAPI, Jobs: JobsAPI } = require('./api');
 const { CI } = require('./ci');
 
 const assetsURLMap = new Map([
@@ -49,6 +49,12 @@ class JobReporter {
       headers: {
         'User-Agent': userAgent,
       },
+    });
+
+    this.jobsAPI = new JobsAPI({
+      region: this.region,
+      username: this.username,
+      accessKey: this.accessKey,
     });
   }
 
@@ -171,6 +177,18 @@ class JobReporter {
       }
     } catch (e) {
       console.error('Failed to upload test result:', e.message);
+    }
+  }
+
+  /**
+   * @param jobId {string}
+   * @param passed {boolean}
+   */
+  async updateJobStatus(jobId, passed) {
+    try {
+      await this.jobsAPI.updateStatus(jobId, passed);
+    } catch (e) {
+      console.error('Failed to update job status:', e.message);
     }
   }
 
