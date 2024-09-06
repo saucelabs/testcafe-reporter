@@ -132,20 +132,8 @@ export class Jobs {
   }
 
   async updateStatus(jobId: string, passed: boolean) {
-    try {
-      await this.api.put<void>(`/rest/v1/${this.username}/jobs/${jobId}`, {
-        passed,
-      });
-    } catch (e: unknown) {
-      if (isAxiosError(e)) {
-        debug(
-          'Unexpected http error while reporting test run data: %s',
-          e.message,
-        );
-      } else {
-        debug('Unexpected error while reporting test run data', e);
-      }
-      throw e;
-    }
+    await this.api.put<void>(`/rest/v1/${this.username}/jobs/${jobId}`, {
+      passed,
+    });
   }
 }
