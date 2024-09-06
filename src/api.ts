@@ -138,15 +138,10 @@ export class Jobs {
       });
     } catch (e: unknown) {
       if (isAxiosError(e)) {
-        switch (e.response?.status) {
-          case 400:
-          case 404:
-          default:
-            debug(
-              'Unexpected http error while reporting test run data: %s',
-              e.message,
-            );
-        }
+        debug(
+          'Unexpected http error while reporting test run data: %s',
+          e.message,
+        );
       } else {
         debug('Unexpected error while reporting test run data', e);
       }
