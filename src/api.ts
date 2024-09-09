@@ -1,4 +1,4 @@
-import * as util from 'util';
+import * as util from 'node:util';
 import axios, {
   AxiosInstance,
   RawAxiosRequestHeaders,
@@ -113,5 +113,27 @@ export class TestRuns {
         debug('Unexpected error while reporting test run data', e);
       }
     }
+  }
+}
+
+export class Jobs {
+  private api: AxiosInstance;
+  private username: string;
+
+  constructor(opts: { username: string; accessKey: string; region: Region }) {
+    this.api = axios.create({
+      auth: {
+        username: opts.username,
+        password: opts.accessKey,
+      },
+      baseURL: apiURLMap.get(opts.region),
+    });
+    this.username = opts.username;
+  }
+
+  async updateStatus(jobId: string, passed: boolean) {
+    await this.api.put<void>(`/rest/v1/${this.username}/jobs/${jobId}`, {
+      passed,
+    });
   }
 }
