@@ -2,7 +2,9 @@
 
 This is the **Sauce Labs** reporter plugin for [TestCafe](http://devexpress.github.io/testcafe).
 
-If you are already using the [Sauce Labs Browser Provider](https://github.com/DevExpress/testcafe-browser-provider-saucelabs) for running tests against Sauce Labs, please refrain from installing this reporter, as it will create duplicate reports.
+Tip: You can also use this reporter together with the
+[Sauce Labs Browser Provider](https://github.com/saucelabs/testcafe-provider)
+for running tests against remote browsers from Sauce Labs!
 
 ## Installation
 
@@ -49,33 +51,4 @@ testCafe
   .browsers('chrome')
   .reporter('saucelabs') // <-
   .run();
-```
-
-## Development
-
-### Local Testing
-
-To test the reporter locally, link it to itself and then run a test with the reporter set:
-
-```sh
-$ npm link
-$ npm link testcafe-reporter-saucelabs
-$ npx testcafe chrome tests/integration/sauceswag.ok.test.js --reporter saucelabs
-```
-
-#### Common Issues
-
-**Problem**
-
-```sh
-$ npx testcafe chrome tests/integration/sauceswag.test.js --reporter saucelabs
-ERROR The "saucelabs" reporter does not exist. Check the reporter parameter for errors.
-```
-
-**Solution**
-
-Re-link the package:
-
-```sh
-npm link && npm link testcafe-reporter-saucelabs
 ```
