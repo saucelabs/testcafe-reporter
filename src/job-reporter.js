@@ -34,13 +34,6 @@ class JobReporter {
     this.tags = opts.tags;
     this.region = opts.region || 'us-west-1';
 
-    if (!this.isAccountSet() && !process.env.SAUCE_DISABLE_UPLOAD) {
-      console.warn(
-        'Credentials not set! SAUCE_USERNAME and SAUCE_ACCESS_KEY environment ' +
-          'variables must be defined in order for reports to be uploaded to Sauce Labs.',
-      );
-      return;
-    }
     const userAgent = `testcafe-reporter/${reporterVersion}`;
     this.testComposer = new TestComposer({
       region: this.region,

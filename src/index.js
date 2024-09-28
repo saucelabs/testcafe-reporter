@@ -163,6 +163,10 @@ module.exports = function () {
      */
     async reportFixture(fixture) {
       if (!this.reporter.isAccountSet()) {
+        console.warn(
+          'Credentials not set! SAUCE_USERNAME and SAUCE_ACCESS_KEY environment ' +
+            'variables must be defined in order for reports to be uploaded to Sauce Labs.',
+        );
         return;
       }
 
