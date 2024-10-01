@@ -193,10 +193,6 @@ class JobReporter {
   }
 
   async reportSession(session) {
-    if (!this.isAccountSet()) {
-      return;
-    }
-
     const job = await this.testComposer.createReport({
       name: session.name,
       startTime: session.startTime.toISOString(),
