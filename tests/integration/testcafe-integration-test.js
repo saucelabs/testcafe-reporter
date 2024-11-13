@@ -44,4 +44,5 @@ runTest()
   })
   .catch((error) => {
     console.error('Integration test failed:', error.message);
+    process.exit(1);
   });
