@@ -1,6 +1,5 @@
 const Stream = require('stream');
 import * as fs from 'node:fs';
-import { readdir } from 'node:fs/promises';
 const buildReporterPlugin =
   require('testcafe').embeddingUtils.buildReporterPlugin;
 const {
@@ -106,13 +105,13 @@ function reporterFactory() {
           .filter(idFilter)
           .map((v) => this._getAsset(v.videoPath, testName));
 
-        const artifactDir = testRunInfo.reportData[browser.testRunId]?.find(
-          (item) => item.artifactUploadDir,
-        )?.artifactUploadDir;
-        const artifacts = await this.collectArtifact(artifactDir);
+        const sauceAttachments =
+          testRunInfo.reportData[browser.testRunId]?.find(
+            (item) => item.sauceAttachments,
+          )?.sauceAttachments || [];
+        const artifacts = this.collectArtifacts(sauceAttachments);
 
         const testStartTime = this.startTimes.get(testRunInfo.testId);
-
         const test = new Test(testName);
         test.status = this.getTestStatus(errs, testRunInfo.skipped);
         test.duration = testRunInfo.durationMs;
@@ -220,24 +219,22 @@ function reporterFactory() {
       };
     },
 
-    async collectArtifact(artifactPath) {
-      if (!artifactPath || !fs.existsSync(artifactPath)) {
-        return [];
-      }
-      const entries = await readdir(path.resolve(artifactPath), {
-        withFileTypes: true,
-      });
-
+    collectArtifacts(attachments) {
       const artifacts = [];
-      for (const entry of entries) {
-        if (!entry.isFile()) {
-          continue;
+
+      for (const attachment of attachments) {
+        try {
+          if (fs.existsSync(attachment) && fs.statSync(attachment).isFile()) {
+            artifacts.push({
+              name: path.basename(attachment),
+              localPath: attachment,
+            });
+          }
+        } catch (error) {
+          console.warn(
+            `Skipping sauce attachment ${attachment}: ${error.message}`,
+          );
         }
-        const entryPath = path.join(artifactPath, entry.name);
-        artifacts.push({
-          name: entry.name,
-          localPath: entryPath,
-        });
       }
       return artifacts;
     },

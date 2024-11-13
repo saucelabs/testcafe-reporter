@@ -33,9 +33,6 @@ class JobReporter {
     this.build = opts.build || randomBuildID();
     this.tags = opts.tags;
     this.region = opts.region || 'us-west-1';
-    if (opts.cleanupArtifactPath && fs.existsSync(opts.cleanupArtifactPath)) {
-      fs.rmSync(opts.cleanupArtifactPath, { recursive: true, force: true });
-    }
 
     const userAgent = `testcafe-reporter/${reporterVersion}`;
     this.testComposer = new TestComposer({
