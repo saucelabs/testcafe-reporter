@@ -109,6 +109,7 @@ function reporterFactory() {
         const artifactDir = testRunInfo.reportData[browser.testRunId]?.find(
           (item) => item.artifactUploadDir,
         )?.artifactUploadDir;
+        const artifacts = await this.collectArtifact(artifactDir);
 
         const testStartTime = this.startTimes.get(testRunInfo.testId);
 
@@ -132,7 +133,7 @@ function reporterFactory() {
           test,
           screenshotAssets,
           videoAssets,
-          await this.collectArtifact(artifactDir),
+          artifacts,
         );
       });
     },
