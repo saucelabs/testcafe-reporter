@@ -59,6 +59,4 @@ jobs:
       - name: Test
         working-directory: tests/integration
         run: |
-          npm ci
-          npm link testcafe-reporter-saucelabs
-          node testcafe-integration-test.js
+          npm ci && npm link testcafe-reporter-saucelabs && node testcafe-integration-test.js
