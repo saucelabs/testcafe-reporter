@@ -195,6 +195,10 @@ module.exports = function () {
               assets: browserTestRun.assets,
               userAgent: browserTestRun.userAgent,
             };
+            const artifacts = await this.reporter.collectArtifacts(
+              path.basename(fixture.path),
+            );
+            session.assets.push(...artifacts);
             try {
               const job = await this.reporter.reportSession(session);
               this.setIndent(this.indentWidth * 4)
@@ -209,7 +213,9 @@ module.exports = function () {
                 this.write(`  ${this.chalk.bold('Assets:')}`).newline();
               }
               for (const asset of job.assets) {
-                this.write(`    - ${this.chalk.blue.underline(asset)}`);
+                this.write(
+                  `    - ${this.chalk.blue.underline(asset)}`,
+                ).newline();
               }
 
               await this.reporter.reportTestRun(
