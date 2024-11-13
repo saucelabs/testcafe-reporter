@@ -34,12 +34,25 @@ module.exports = {
 };
 ```
 
-| Name                | Description                                                                                                                                                                                                                                                                                                                                | Type                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
-| `build`             | Sets a unique build ID. <br> **Default**: `''`                                                                                                                                                                                                                                                                                             | `string`                          |
-| `tags`              | Specifies tags to add to the uploaded Sauce job for easy categorization. <br> **Default**: `[]`                                                                                                                                                                                                                                            | `string[]`                        |
-| `region`            | Sets the region in which the service will run. <br> Valid options are `us-west-1` or `eu-central-1`. <br> **Default**: `'us-west-1'`                                                                                                                                                                                                       | `'us-west-1'` \| `'eu-central-1'` |
-| `artifactUploadDir` | Specifies the directory to automatically upload files from for each spec file. <br> Files in `{artifactUploadDir}/{specFileBaseName}/` will be uploaded to the job that ran `{specFileBaseName}`. The directory path is relative to the test execution location and is deleted at the start of the next run. <br> **Default**: `undefined` | `string`                          |
+| Name     | Description                                                                                                                          | Type                              |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| `build`  | Sets a build ID. <br> **Default**: `''`                                                                                              | `string`                          |
+| `tags`   | Specifies tags to add to the uploaded Sauce job for easy categorization. <br> **Default**: `[]`                                      | `string[]`                        |
+| `region` | Sets the region in which the service will run. <br> Valid options are `us-west-1` or `eu-central-1`. <br> **Default**: `'us-west-1'` | `'us-west-1'` \| `'eu-central-1'` |
+
+### Uploading Custom Artifacts
+
+Custom artifacts, like log files or screenshots, can be uploaded during TestCafe  
+tests with the `t.report` API. Use the `artifactUploadDir` option to set a custom  
+path for saving artifacts.
+
+Add the following example to your test:
+
+```javascript
+await t.report({
+  artifactUploadDir: `artifacts/${unique_id}/${browser}/my_test.log`,
+});
+```
 
 ## Usage
 

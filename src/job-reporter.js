@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-import { readdir } from 'node:fs/promises';
 const stream = require('stream');
 const { Status, Test } = require('@saucelabs/sauce-json-reporter');
 const { TestComposer } = require('@saucelabs/testcomposer');
@@ -34,10 +33,6 @@ class JobReporter {
     this.build = opts.build || randomBuildID();
     this.tags = opts.tags;
     this.region = opts.region || 'us-west-1';
-    this.artifactUploadDir = opts.artifactUploadDir;
-    if (opts.artifactUploadDir && fs.existsSync(opts.artifactUploadDir)) {
-      fs.rmSync(opts.artifactUploadDir, { recursive: true, force: true });
-    }
 
     const userAgent = `testcafe-reporter/${reporterVersion}`;
     this.testComposer = new TestComposer({
@@ -245,33 +240,6 @@ class JobReporter {
     );
 
     return job;
-  }
-
-  async collectArtifacts(specName) {
-    if (!this.artifactUploadDir) {
-      return [];
-    }
-    const artifactPath = path.join(this.artifactUploadDir, specName);
-    if (!fs.existsSync(artifactPath)) {
-      return [];
-    }
-
-    const entries = await readdir(path.resolve(artifactPath), {
-      withFileTypes: true,
-    });
-
-    const assets = [];
-    for (const entry of entries) {
-      if (!entry.isFile()) {
-        continue;
-      }
-      const entryPath = path.join(artifactPath, entry.name);
-      assets.push({
-        name: entry.name,
-        localPath: entryPath,
-      });
-    }
-    return assets;
   }
 
   logSuite(suite, depth = 0) {

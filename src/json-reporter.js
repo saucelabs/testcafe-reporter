@@ -1,4 +1,6 @@
 const Stream = require('stream');
+import * as fs from 'node:fs';
+import { readdir } from 'node:fs/promises';
 const buildReporterPlugin =
   require('testcafe').embeddingUtils.buildReporterPlugin;
 const {
@@ -85,8 +87,8 @@ function reporterFactory() {
       this.startTimes.set(testStartInfo.testId, testStartInfo.startTime);
     },
 
-    reportTestDone(testName, testRunInfo, meta) {
-      testRunInfo.browsers.forEach((browser) => {
+    async reportTestDone(testName, testRunInfo, meta) {
+      testRunInfo.browsers.forEach(async (browser) => {
         function idFilter(val) {
           return val.testRunId === browser.testRunId;
         }
@@ -103,6 +105,11 @@ function reporterFactory() {
         const videoAssets = testRunInfo.videos
           .filter(idFilter)
           .map((v) => this._getAsset(v.videoPath, testName));
+
+        const artifactDir = testRunInfo.reportData[browser.testRunId]?.find(
+          (item) => item.artifactUploadDir,
+        )?.artifactUploadDir;
+
         const testStartTime = this.startTimes.get(testRunInfo.testId);
 
         const test = new Test(testName);
@@ -125,6 +132,7 @@ function reporterFactory() {
           test,
           screenshotAssets,
           videoAssets,
+          await this.collectArtifact(artifactDir),
         );
       });
     },
@@ -209,6 +217,28 @@ function reporterFactory() {
         name: path.basename(assetPath),
         localPath: assetPath,
       };
+    },
+
+    async collectArtifact(artifactPath) {
+      if (!artifactPath || !fs.existsSync(artifactPath)) {
+        return [];
+      }
+      const entries = await readdir(path.resolve(artifactPath), {
+        withFileTypes: true,
+      });
+
+      const artifacts = [];
+      for (const entry of entries) {
+        if (!entry.isFile()) {
+          continue;
+        }
+        const entryPath = path.join(artifactPath, entry.name);
+        artifacts.push({
+          name: entry.name,
+          localPath: entryPath,
+        });
+      }
+      return artifacts;
     },
 
     formatErrorCallsite(err) {
