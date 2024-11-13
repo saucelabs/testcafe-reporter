@@ -34,11 +34,12 @@ module.exports = {
 };
 ```
 
-| Name     | Description                                                                                                                          | Type                              |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
-| `build`  | Sets a build ID. <br> **Default**: `''`                                                                                              | `string`                          |
-| `tags`   | Specifies tags to add to the uploaded Sauce job for easy categorization. <br> **Default**: `[]`                                      | `string[]`                        |
-| `region` | Sets the region in which the service will run. <br> Valid options are `us-west-1` or `eu-central-1`. <br> **Default**: `'us-west-1'` | `'us-west-1'` \| `'eu-central-1'` |
+| Name                  | Description                                                                                                                          | Type                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| `build`               | Sets a build ID. <br> **Default**: `''`                                                                                              | `string`                          |
+| `tags`                | Specifies tags to add to the uploaded Sauce job for easy categorization. <br> **Default**: `[]`                                      | `string[]`                        |
+| `region`              | Sets the region in which the service will run. <br> Valid options are `us-west-1` or `eu-central-1`. <br> **Default**: `'us-west-1'` | `'us-west-1'` \| `'eu-central-1'` |
+| `cleanupArtifactPath` | Specifies the artifacts path to be cleaned up when detected. <br> **Default**: `undefined`                                           | `string`                          |
 
 ### Uploading Custom Artifacts
 
