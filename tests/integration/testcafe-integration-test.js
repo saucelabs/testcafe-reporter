@@ -5,10 +5,9 @@ function runTest() {
   let stderrData = '';
 
   return new Promise((resolve, reject) => {
-    // Run TestCafe CLI with custom reporter
     const testcafeProcess = spawn('npx', [
       'testcafe',
-      'chrome',
+      'chrome:headless',
       'tests',
       '--reporter',
       'saucelabs',
