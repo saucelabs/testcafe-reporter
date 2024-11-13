@@ -107,7 +107,7 @@ function reporterFactory() {
 
         const sauceAttachments =
           testRunInfo.reportData[browser.testRunId]?.find(
-            (item) => item.sauceAttachments,
+            (item) => item?.sauceAttachments,
           )?.sauceAttachments || [];
         const attachments = this.collectAttachments(sauceAttachments);
 

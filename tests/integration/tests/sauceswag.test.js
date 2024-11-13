@@ -51,7 +51,7 @@ test('SwagLabs standard user login', async function (t) {
 });
 
 test('Attach files', async function (t) {
-  await t.report({
+  await t.report(null, undefined, {
     sauceAttachments: ['test.log'],
   });
 });
