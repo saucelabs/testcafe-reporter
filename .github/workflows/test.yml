@@ -64,4 +64,4 @@ jobs:
         run: |
           npm ci
           npm link testcafe-reporter-saucelabs
-          node testcafe-integration-test.js
+          npx testcafe chrome:headless tests --reporter saucelabs
