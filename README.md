@@ -40,20 +40,6 @@ module.exports = {
 | `tags`   | Specifies tags to add to the uploaded Sauce job for easy categorization. <br> **Default**: `[]`                                      | `string[]`                        |
 | `region` | Sets the region in which the service will run. <br> Valid options are `us-west-1` or `eu-central-1`. <br> **Default**: `'us-west-1'` | `'us-west-1'` \| `'eu-central-1'` |
 
-### Uploading Custom Artifacts
-
-Custom artifacts, such as log files or screenshots, can be uploaded during TestCafe
-tests using the `t.report` API. Specify the `sauceAttachments` option to include
-artifacts. Paths for artifacts are relative to the current test execution directory.
-
-Add the following example to your test:
-
-```javascript
-await t.report({
-  sauceAttachments: ['my_screenshots/this-is-fine.png', 'test.log'],
-});
-```
-
 ## Usage
 
 When you run tests from the command line, specify the reporter name using the `--reporter` option:
@@ -71,4 +57,18 @@ testCafe
   .browsers('chrome')
   .reporter('saucelabs') // <-
   .run();
+```
+
+### Uploading Custom Artifacts
+
+Custom artifacts, such as log files or screenshots, can be uploaded during TestCafe
+tests using the `t.report` API. Specify the `sauceAttachments` option to include
+artifacts. Paths for artifacts are relative to the current test execution directory.
+
+Add the following example to your test:
+
+```javascript
+await t.report({
+  sauceAttachments: ['my_screenshots/this-is-fine.png', 'test.log'],
+});
 ```
