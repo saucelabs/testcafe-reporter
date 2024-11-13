@@ -57,12 +57,12 @@ jobs:
         run: npm link
 
       - name: Test
-        working-directory: tests/integration
         env:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_ACCESS_KEY: ${{ secrets.SAUCE_ACCESS_KEY }}
         run: |
-          find .
+          npm link
+          cd tests/integration
           npm ci
           npm link testcafe-reporter-saucelabs
           node testcafe-integration-test.js
