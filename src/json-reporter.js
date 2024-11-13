@@ -231,7 +231,7 @@ function reporterFactory() {
             });
           }
         } catch (error) {
-          console.warn(`Skipping upload ${attachment}: ${error.message}`);
+          console.warn(`Skipping upload of ${attachment}: ${error.message}`);
         }
       }
       return assets;
