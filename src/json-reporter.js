@@ -1,4 +1,5 @@
 const Stream = require('stream');
+import * as fs from 'node:fs';
 const buildReporterPlugin =
   require('testcafe').embeddingUtils.buildReporterPlugin;
 const {
@@ -103,8 +104,14 @@ function reporterFactory() {
         const videoAssets = testRunInfo.videos
           .filter(idFilter)
           .map((v) => this._getAsset(v.videoPath, testName));
-        const testStartTime = this.startTimes.get(testRunInfo.testId);
 
+        const sauceAttachments =
+          testRunInfo.reportData[browser.testRunId]?.find(
+            (item) => item?.sauceAttachments,
+          )?.sauceAttachments || [];
+        const attachments = this.collectAttachments(sauceAttachments);
+
+        const testStartTime = this.startTimes.get(testRunInfo.testId);
         const test = new Test(testName);
         test.status = this.getTestStatus(errs, testRunInfo.skipped);
         test.duration = testRunInfo.durationMs;
@@ -125,6 +132,7 @@ function reporterFactory() {
           test,
           screenshotAssets,
           videoAssets,
+          attachments,
         );
       });
     },
@@ -209,6 +217,24 @@ function reporterFactory() {
         name: path.basename(assetPath),
         localPath: assetPath,
       };
+    },
+
+    collectAttachments(attachments) {
+      const assets = [];
+
+      for (const attachment of attachments) {
+        try {
+          if (fs.existsSync(attachment) && fs.statSync(attachment).isFile()) {
+            assets.push({
+              name: path.basename(attachment),
+              localPath: attachment,
+            });
+          }
+        } catch (error) {
+          console.warn(`Skipping upload of ${attachment}: ${error.message}`);
+        }
+      }
+      return assets;
     },
 
     formatErrorCallsite(err) {

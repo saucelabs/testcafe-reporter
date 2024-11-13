@@ -209,7 +209,9 @@ module.exports = function () {
                 this.write(`  ${this.chalk.bold('Assets:')}`).newline();
               }
               for (const asset of job.assets) {
-                this.write(`    - ${this.chalk.blue.underline(asset)}`);
+                this.write(
+                  `    - ${this.chalk.blue.underline(asset)}`,
+                ).newline();
               }
 
               await this.reporter.reportTestRun(
@@ -282,7 +284,12 @@ module.exports = function () {
 
       this.write(title, name, testRunInfo, meta);
 
-      this._renderReportData(testRunInfo.reportData, name, testRunInfo, meta);
+      this._renderReportData(
+        testRunInfo.reportData,
+        testRunInfo.browsers,
+        testRunInfo,
+        meta,
+      );
 
       if (hasErr) {
         this._renderErrors(testRunInfo.errs, name, testRunInfo, meta);
@@ -326,7 +333,7 @@ module.exports = function () {
     },
 
     _renderReportData(reportData, browsers, name, testRunInfo, meta) {
-      if (!reportData) return;
+      if (!reportData || !browsers) return;
 
       if (!Object.values(reportData).some((data) => data.length)) return;
 
@@ -349,7 +356,7 @@ module.exports = function () {
         browserReportData.forEach((data) => {
           this.setIndent(this.indentWidth * dataIndent)
             .newline()
-            .write(`- ${data}`, name, testRunInfo, meta);
+            .write(`- ${JSON.stringify(data)}`, name, testRunInfo, meta);
         });
       });
     },

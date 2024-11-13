@@ -49,3 +49,9 @@ test('SwagLabs standard user login', async function (t) {
     .expect(Selector('#inventory_container').visible)
     .eql(true);
 });
+
+test('Attach files', async function (t) {
+  await t.report(null, undefined, {
+    sauceAttachments: ['test.log'],
+  });
+});
