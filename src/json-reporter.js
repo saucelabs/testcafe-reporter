@@ -86,8 +86,8 @@ function reporterFactory() {
       this.startTimes.set(testStartInfo.testId, testStartInfo.startTime);
     },
 
-    async reportTestDone(testName, testRunInfo, meta) {
-      testRunInfo.browsers.forEach(async (browser) => {
+    reportTestDone(testName, testRunInfo, meta) {
+      testRunInfo.browsers.forEach((browser) => {
         function idFilter(val) {
           return val.testRunId === browser.testRunId;
         }
@@ -109,7 +109,7 @@ function reporterFactory() {
           testRunInfo.reportData[browser.testRunId]?.find(
             (item) => item.sauceAttachments,
           )?.sauceAttachments || [];
-        const artifacts = this.collectArtifacts(sauceAttachments);
+        const attachments = this.collectAttachments(sauceAttachments);
 
         const testStartTime = this.startTimes.get(testRunInfo.testId);
         const test = new Test(testName);
@@ -132,7 +132,7 @@ function reporterFactory() {
           test,
           screenshotAssets,
           videoAssets,
-          artifacts,
+          attachments,
         );
       });
     },
@@ -219,24 +219,22 @@ function reporterFactory() {
       };
     },
 
-    collectArtifacts(attachments) {
-      const artifacts = [];
+    collectAttachments(attachments) {
+      const assets = [];
 
       for (const attachment of attachments) {
         try {
           if (fs.existsSync(attachment) && fs.statSync(attachment).isFile()) {
-            artifacts.push({
+            assets.push({
               name: path.basename(attachment),
               localPath: attachment,
             });
           }
         } catch (error) {
-          console.warn(
-            `Skipping sauce attachment ${attachment}: ${error.message}`,
-          );
+          console.warn(`Skipping upload ${attachment}: ${error.message}`);
         }
       }
-      return artifacts;
+      return assets;
     },
 
     formatErrorCallsite(err) {

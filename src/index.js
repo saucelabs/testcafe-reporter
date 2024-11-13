@@ -83,7 +83,7 @@ module.exports = function () {
     },
 
     reportTestDone: async function (name, testRunInfo, meta) {
-      await this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
+      this.sauceJsonReporter.reportTestDone(name, testRunInfo, meta);
 
       if (this.disableUpload) {
         return;

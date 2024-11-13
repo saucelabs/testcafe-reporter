@@ -98,7 +98,7 @@ export class Fixture {
     test: Test,
     screenshotAssets: Assets,
     videoAssets: Assets,
-    artifacts: Assets,
+    attachments: Assets,
   ) {
     if (!this.browserTestRuns.has(userAgent)) {
       this.browserTestRuns.set(userAgent, new BrowserTestRun(userAgent));
@@ -122,7 +122,7 @@ export class Fixture {
     }
 
     tr.addTest(this.path, this.name, test);
-    tr.addAssets([...screenshotAssets, ...videoAssets, ...artifacts]);
+    tr.addAssets([...screenshotAssets, ...videoAssets, ...attachments]);
   }
 
   get testRuns() {

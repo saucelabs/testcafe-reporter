@@ -57,7 +57,7 @@ jobs:
         run: npm link
 
       - name: Test
-        working_directory: tests/integration
+        working-directory: tests/integration
         env:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_ACCESS_KEY: ${{ secrets.SAUCE_ACCESS_KEY }}

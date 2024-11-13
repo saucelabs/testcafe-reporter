@@ -62,7 +62,7 @@ describe('Fixture', () => {
     const userAgent = 'Chrome 99 / macOS 10';
     const screenshotAssets: Assets = [];
     const videoAssets: Assets = [];
-    const artifacts: Assets = [];
+    const assets: Assets = [];
     const test = new Test(
       'test',
       Status.Passed,
@@ -77,7 +77,7 @@ describe('Fixture', () => {
       test,
       screenshotAssets,
       videoAssets,
-      artifacts,
+      assets,
     );
 
     expect(sut.testRuns).toMatchSnapshot();
