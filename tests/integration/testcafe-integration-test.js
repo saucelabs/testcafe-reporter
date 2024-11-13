@@ -1,9 +1,6 @@
 const { spawn } = require('child_process');
 
 function runTest() {
-  let stdoutData = '';
-  let stderrData = '';
-
   return new Promise((resolve, reject) => {
     const testcafeProcess = spawn('npx', [
       'testcafe',
@@ -13,17 +10,12 @@ function runTest() {
       'saucelabs',
     ]);
 
-    testcafeProcess.stdout.on('data', (data) => {
-      stdoutData += data.toString();
-    });
-
-    testcafeProcess.stderr.on('data', (data) => {
-      stderrData += data.toString();
-    });
+    testcafeProcess.stdout.pipe(process.stdout);
+    testcafeProcess.stderr.pipe(process.stderr);
 
     testcafeProcess.on('close', (code) => {
       if (code === 0) {
-        resolve({ stdoutData, stderrData });
+        resolve();
       } else {
         reject(new Error(`TestCafe process exited with code ${code}`));
       }
@@ -32,14 +24,10 @@ function runTest() {
 }
 
 runTest()
-  .then(({ stdoutData, stderrData }) => {
+  .then(() => {
     console.log(
       'Integration test for custom reporter completed successfully.\n',
     );
-    console.log(stdoutData);
-    if (stderrData) {
-      console.log('\n--- Test Errors (stderr) ---\n', stderrData);
-    }
   })
   .catch((error) => {
     console.error('Integration test failed:', error.message);
