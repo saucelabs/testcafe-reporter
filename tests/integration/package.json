@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "testcafe": "^3.7.0",
+    "testcafe": "^3.7.3",
     "testcafe-reporter-saucelabs": "^3.5.1"
   }
 }
